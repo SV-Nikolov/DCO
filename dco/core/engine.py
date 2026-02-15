@@ -5,6 +5,7 @@ Handles communication with Stockfish using python-chess.
 
 import os
 import shutil
+import glob
 from typing import Optional, List, Tuple
 from dataclasses import dataclass
 import chess
@@ -77,17 +78,19 @@ class ChessEngine:
             if os.path.exists(path):
                 return path
         
-        # Check current directory and subdirectories
-        local_paths = [
-            "stockfish.exe",
+        # Check current directory and subdirectories for any stockfish executable
+        search_patterns = [
+            "stockfish*.exe",
             "stockfish",
-            "engines/stockfish.exe",
+            "engines/stockfish*.exe",
             "engines/stockfish",
         ]
         
-        for path in local_paths:
-            if os.path.exists(path):
-                return os.path.abspath(path)
+        for pattern in search_patterns:
+            matches = glob.glob(pattern)
+            if matches:
+                # Return the first match
+                return os.path.abspath(matches[0])
         
         return None
     
