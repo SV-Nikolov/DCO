@@ -26,6 +26,19 @@ CLASSIFICATION_COLORS = {
     MoveClassification.BRILLIANT: QColor(147, 112, 219),  # Medium purple
 }
 
+# String-based lookup for when values come from DB
+CLASSIFICATION_COLORS_STR = {
+    "book": QColor(200, 200, 200),  # Gray
+    "best": QColor(144, 238, 144),  # Light green
+    "excellent": QColor(173, 216, 230),  # Light blue
+    "good": QColor(255, 255, 224),  # Light yellow
+    "inaccuracy": QColor(255, 228, 181),  # Moccasin
+    "mistake": QColor(255, 200, 124),  # Light orange
+    "blunder": QColor(255, 160, 122),  # Light coral/red
+    "critical": QColor(255, 215, 0),  # Gold
+    "brilliant": QColor(147, 112, 219),  # Medium purple
+}
+
 # Symbols for classifications
 CLASSIFICATION_SYMBOLS = {
     MoveClassification.BOOK: "📖",
@@ -37,6 +50,19 @@ CLASSIFICATION_SYMBOLS = {
     MoveClassification.BLUNDER: "??",
     MoveClassification.CRITICAL: "⚠",
     MoveClassification.BRILLIANT: "!!",
+}
+
+# String-based lookup for symbols
+CLASSIFICATION_SYMBOLS_STR = {
+    "book": "📖",
+    "best": "✓",
+    "excellent": "👍",
+    "good": "○",
+    "inaccuracy": "?!",
+    "mistake": "?",
+    "blunder": "??",
+    "critical": "⚠",
+    "brilliant": "!!",
 }
 
 
@@ -159,8 +185,15 @@ class MoveListWidget(QWidget):
         Returns:
             QTableWidgetItem with move text and styling
         """
-        # Get classification symbol
-        symbol = CLASSIFICATION_SYMBOLS.get(move.classification, "")
+        # Get classification - handle both enum and string values
+        classification = move.classification
+        if isinstance(classification, MoveClassification):
+            symbol = CLASSIFICATION_SYMBOLS.get(classification, "")
+            color = CLASSIFICATION_COLORS.get(classification)
+        else:
+            # String value from database
+            symbol = CLASSIFICATION_SYMBOLS_STR.get(str(classification), "")
+            color = CLASSIFICATION_COLORS_STR.get(str(classification))
         
         # Create text
         text = f"{move.san} {symbol}".strip()
@@ -169,8 +202,8 @@ class MoveListWidget(QWidget):
         item = QTableWidgetItem(text)
         
         # Set background color based on classification
-        if move.classification in CLASSIFICATION_COLORS:
-            item.setBackground(CLASSIFICATION_COLORS[move.classification])
+        if color:
+            item.setBackground(color)
         
         # Set text color to black for visibility
         item.setForeground(QColor(0, 0, 0))

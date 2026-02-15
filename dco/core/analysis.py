@@ -243,7 +243,7 @@ def save_analysis_to_db(
             eval_best_cp=move_analysis.eval_best_cp,
             eval_after_cp=move_analysis.eval_after_cp,
             best_uci=move_analysis.best_uci,
-            classification=move_analysis.classification,
+            classification=move_analysis.classification.value,
             is_book=move_analysis.is_book,
             is_critical=move_analysis.is_critical,
             is_brilliant=move_analysis.is_brilliant,
