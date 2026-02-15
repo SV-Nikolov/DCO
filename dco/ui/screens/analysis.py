@@ -160,19 +160,41 @@ class AnalysisScreen(QWidget):
         # Board controls
         controls_layout = QHBoxLayout()
         
+        button_style = """
+            QPushButton {
+                background-color: #f3f4f6;
+                color: #1f2937;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #e5e7eb;
+            }
+            QPushButton:disabled {
+                background-color: #f9fafb;
+                color: #9ca3af;
+            }
+        """
+        
         self.first_btn = QPushButton("⏮ First")
+        self.first_btn.setStyleSheet(button_style)
         self.first_btn.clicked.connect(self._go_to_first)
         controls_layout.addWidget(self.first_btn)
         
         self.prev_btn = QPushButton("◀ Prev")
+        self.prev_btn.setStyleSheet(button_style)
         self.prev_btn.clicked.connect(self._go_to_prev)
         controls_layout.addWidget(self.prev_btn)
         
         self.next_btn = QPushButton("Next ▶")
+        self.next_btn.setStyleSheet(button_style)
         self.next_btn.clicked.connect(self._go_to_next)
         controls_layout.addWidget(self.next_btn)
         
         self.last_btn = QPushButton("Last ⏭")
+        self.last_btn.setStyleSheet(button_style)
         self.last_btn.clicked.connect(self._go_to_last)
         controls_layout.addWidget(self.last_btn)
         
@@ -186,6 +208,7 @@ class AnalysisScreen(QWidget):
             border-radius: 6px;
             padding: 10px;
             font-size: 13px;
+            color: #1f2937;
         """)
         self.move_info_label.setWordWrap(True)
         left_layout.addWidget(self.move_info_label)
@@ -212,7 +235,7 @@ class AnalysisScreen(QWidget):
         stats_layout = QVBoxLayout(self.stats_frame)
         
         self.stats_label = QLabel("No analysis available")
-        self.stats_label.setStyleSheet("font-size: 13px;")
+        self.stats_label.setStyleSheet("font-size: 13px; color: #1f2937;")
         self.stats_label.setWordWrap(True)
         stats_layout.addWidget(self.stats_label)
         
@@ -220,7 +243,7 @@ class AnalysisScreen(QWidget):
         
         # Move list
         moves_label = QLabel("Moves")
-        moves_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 15px;")
+        moves_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 15px; color: #1f2937;")
         right_layout.addWidget(moves_label)
         
         self.move_list = MoveListWidget(self)
