@@ -270,11 +270,5 @@ class LibraryScreen(QWidget):
         game_id = self.table.item(row, 0).data(Qt.UserRole)
         
         if game_id:
-            # For now, just show a message
-            # In the future, this will open the analysis screen
-            QMessageBox.information(
-                self,
-                "Game Selected",
-                f"Game ID: {game_id}\n\nAnalysis feature coming in Milestone 2!"
-            )
+            # Open the analysis screen
             self.game_selected.emit(game_id)

@@ -13,6 +13,7 @@ from PySide6.QtGui import QIcon
 from .screens.home import HomeScreen
 from .screens.library import LibraryScreen
 from .screens.import_pgn import ImportScreen
+from .screens.analysis import AnalysisScreen
 from ..data.db import get_db
 
 
@@ -157,13 +158,12 @@ class MainWindow(QMainWindow):
         
         # Library screen
         self.library_screen = LibraryScreen(self.db)
+        self.library_screen.game_selected.connect(self._on_game_selected)
         self.content_stack.addWidget(self.library_screen)
         
-        # Analysis screen (placeholder)
-        analysis_placeholder = QLabel("Analysis - Coming Soon")
-        analysis_placeholder.setAlignment(Qt.AlignCenter)
-        analysis_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
-        self.content_stack.addWidget(analysis_placeholder)
+        # Analysis screen
+        self.analysis_screen = AnalysisScreen(self.db)
+        self.content_stack.addWidget(self.analysis_screen)
         
         # Practice screen (placeholder)
         practice_placeholder = QLabel("Practice Mode - Coming Soon")
@@ -209,3 +209,11 @@ class MainWindow(QMainWindow):
         # Refresh library screen if needed
         if hasattr(self, 'library_screen'):
             self.library_screen.refresh()
+    
+    def _on_game_selected(self, game_id: int):
+        """Handle game selection from library."""
+        # Load game in analysis screen
+        self.analysis_screen.load_game(game_id)
+        
+        # Navigate to analysis screen (index 4)
+        self._on_nav_click(4)
