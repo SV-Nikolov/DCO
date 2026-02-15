@@ -61,7 +61,7 @@ class Game(Base):
     __tablename__ = "games"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    source = Column(Enum(GameSource), nullable=False)
+    source = Column(Enum(GameSource, native_enum=False, length=20), nullable=False)
     
     # PGN headers
     event = Column(String(200))
@@ -151,7 +151,7 @@ class Move(Base):
     best_uci = Column(String(10))
     
     # Classification
-    classification = Column(Enum(MoveClassification))
+    classification = Column(Enum(MoveClassification, native_enum=False, length=20))
     is_book = Column(Boolean, default=False)
     is_critical = Column(Boolean, default=False)
     is_brilliant = Column(Boolean, default=False)
@@ -185,7 +185,7 @@ class PracticeItem(Base):
     target_line_san = Column(JSON, nullable=False)  # Array of SAN moves
     
     # Categorization
-    category = Column(Enum(PracticeCategory), nullable=False)
+    category = Column(Enum(PracticeCategory, native_enum=False, length=20), nullable=False)
     motif_tags = Column(JSON)  # Array of strings: ["fork", "pin", etc.]
     
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -215,7 +215,7 @@ class PracticeProgress(Base):
     lapses = Column(Integer, default=0)
     
     # Last attempt
-    last_result = Column(Enum(PracticeResult))
+    last_result = Column(Enum(PracticeResult, native_enum=False, length=20))
     
     # Statistics
     attempts_total = Column(Integer, default=0)
@@ -236,7 +236,7 @@ class Session(Base):
     __tablename__ = "sessions"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(Enum(SessionType), nullable=False)
+    type = Column(Enum(SessionType, native_enum=False, length=20), nullable=False)
     
     started_at = Column(DateTime, nullable=False)
     ended_at = Column(DateTime)
