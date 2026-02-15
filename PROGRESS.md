@@ -19,25 +19,20 @@
 - ✅ Position evaluation with principal variations
 - ✅ Elo to skill level mapping
 
-### Milestone 3: Classifications + Accuracy (COMPLETE)
+### Milestone 3: Classifications + Accuracy + Analysis UI (COMPLETE)
 - ✅ Move classification system (book/best/excellent/good/inaccuracy/mistake/blunder/critical/brilliant)
 - ✅ Centipawn loss calculation
 - ✅ Accuracy computation with logarithmic decay
 - ✅ Performance Elo estimation
 - ✅ Game analysis engine with move-by-move evaluation
 - ✅ Save analysis results to database
+- ✅ Chessboard widget with SVG rendering
+- ✅ Move list widget with classification colors
+- ✅ Analysis screen with interactive board
+- ✅ Background analysis with progress indicator
+- ✅ Navigate to analysis from library
 
 ## In Progress / Next Steps 🚧
-
-### Milestone 3 (Continued): Analysis UI
-- ⏳ Create Analysis screen to display:
-  - Chess board with position
-  - Move list with classifications
-  - Evaluation bar
-  - Top engine lines
-  - Accuracy and performance stats
-- ⏳ Add "Analyze" button in Library
-- ⏳ Background analysis with progress indicator
 
 ### Milestone 4: Practice Mode
 - ⏳ Practice item generator from mistakes/blunders
@@ -113,10 +108,14 @@ dco/
 │   └── models.py          ✅ SQLAlchemy models
 └── ui/
     ├── main_window.py     ✅ Main application window
-    └── screens/
-        ├── home.py        ✅ Home screen
-        ├── import_pgn.py  ✅ Import screen
-        └── library.py     ✅ Library screen
+    ├── screens/
+    │   ├── home.py        ✅ Home screen
+    │   ├── import_pgn.py  ✅ Import screen
+    │   ├── library.py     ✅ Library screen
+    │   └── analysis.py    ✅ Analysis screen
+    └── widgets/
+        ├── chessboard.py  ✅ Interactive SVG board
+        └── move_list.py   ✅ Move list widget
 ```
 
 ### Modules To Implement
@@ -135,14 +134,11 @@ dco/
 └── ui/
     ├── screens/
     │   ├── play.py        ⏳ Play vs computer
-    │   ├── analysis.py    ⏳ Analysis viewer
     │   ├── practice.py    ⏳ Practice mode
     │   ├── puzzles.py     ⏳ Puzzle trainer
     │   ├── statistics.py  ⏳ Statistics dashboard
     │   └── settings.py    ⏳ Settings
     └── widgets/
-        ├── chessboard.py  ⏳ Interactive board
-        ├── move_list.py   ⏳ Move list widget
         ├── eval_bar.py    ⏳ Evaluation bar
         └── charts.py      ⏳ Chart widgets
 ```
@@ -180,13 +176,18 @@ dco/
    - Import PGN games (paste text or import file)
    - View games in Library
    - Search and filter games
+   - Double-click a game to view analysis
+   - Analyze games with Stockfish
+   - Review games move-by-move with visual board
+   - See move classifications (blunders, mistakes, etc.)
+   - View accuracy and performance ratings
    - See basic statistics on Home screen
 
 5. Coming soon:
-   - Analyze games with engine
    - Practice from your mistakes
    - View detailed statistics
    - Solve puzzles
+   - Play vs Computer
 
 ## Performance Notes
 
@@ -204,17 +205,17 @@ dco/
 
 ## Next Immediate Steps
 
-1. **Create Analysis Screen**: Display move-by-move analysis with visual feedback
-2. **Integrate Analysis Button**: Connect Library to Analysis screen
-3. **Add Progress Indicator**: Show analysis progress for long-running operations
-4. **Test with Real Games**: Import and analyze multiple games to verify functionality
+1. **Practice Item Generator**: Extract mistakes and blunders from analyzed games to create practice items
+2. **Practice Session UI**: Build interface for practicing positions with move validation
+3. **Spaced Repetition**: Implement SM-2 algorithm for intelligent practice scheduling
+4. **Test Practice Mode**: Verify practice functionality with real game scenarios
 
 ## Estimated Completion
 
-- **Current Progress**: ~40% complete
+- **Current Progress**: ~55% complete
 - **Milestone 1-3**: Complete ✅
 - **Milestone 4-6**: In progress ⏳
-- **Full Feature Set**: Additional 2-3 weeks of development
+- **Full Feature Set**: Additional 1-2 weeks of development
 
 ---
 
