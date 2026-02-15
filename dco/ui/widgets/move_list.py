@@ -26,17 +26,17 @@ CLASSIFICATION_COLORS = {
     MoveClassification.BRILLIANT: QColor(147, 112, 219),  # Medium purple
 }
 
-# String-based lookup for when values come from DB
+# String-based lookup for when values come from DB (enum names, uppercase)
 CLASSIFICATION_COLORS_STR = {
-    "book": QColor(200, 200, 200),  # Gray
-    "best": QColor(144, 238, 144),  # Light green
-    "excellent": QColor(173, 216, 230),  # Light blue
-    "good": QColor(255, 255, 224),  # Light yellow
-    "inaccuracy": QColor(255, 228, 181),  # Moccasin
-    "mistake": QColor(255, 200, 124),  # Light orange
-    "blunder": QColor(255, 160, 122),  # Light coral/red
-    "critical": QColor(255, 215, 0),  # Gold
-    "brilliant": QColor(147, 112, 219),  # Medium purple
+    "BOOK": QColor(200, 200, 200),  # Gray
+    "BEST": QColor(144, 238, 144),  # Light green
+    "EXCELLENT": QColor(173, 216, 230),  # Light blue
+    "GOOD": QColor(255, 255, 224),  # Light yellow
+    "INACCURACY": QColor(255, 228, 181),  # Moccasin
+    "MISTAKE": QColor(255, 200, 124),  # Light orange
+    "BLUNDER": QColor(255, 160, 122),  # Light coral/red
+    "CRITICAL": QColor(255, 215, 0),  # Gold
+    "BRILLIANT": QColor(147, 112, 219),  # Medium purple
 }
 
 # Symbols for classifications
@@ -52,17 +52,17 @@ CLASSIFICATION_SYMBOLS = {
     MoveClassification.BRILLIANT: "!!",
 }
 
-# String-based lookup for symbols
+# String-based lookup for symbols (enum names, uppercase)
 CLASSIFICATION_SYMBOLS_STR = {
-    "book": "📖",
-    "best": "✓",
-    "excellent": "👍",
-    "good": "○",
-    "inaccuracy": "?!",
-    "mistake": "?",
-    "blunder": "??",
-    "critical": "⚠",
-    "brilliant": "!!",
+    "BOOK": "📖",
+    "BEST": "✓",
+    "EXCELLENT": "👍",
+    "GOOD": "○",
+    "INACCURACY": "?!",
+    "MISTAKE": "?",
+    "BLUNDER": "??",
+    "CRITICAL": "⚠",
+    "BRILLIANT": "!!",
 }
 
 
@@ -187,13 +187,16 @@ class MoveListWidget(QWidget):
         """
         # Get classification - handle both enum and string values
         classification = move.classification
+        
         if isinstance(classification, MoveClassification):
+            # Enum object
             symbol = CLASSIFICATION_SYMBOLS.get(classification, "")
             color = CLASSIFICATION_COLORS.get(classification)
         else:
-            # String value from database
-            symbol = CLASSIFICATION_SYMBOLS_STR.get(str(classification), "")
-            color = CLASSIFICATION_COLORS_STR.get(str(classification))
+            # String value from database (enum name in uppercase)
+            classification_str = str(classification).upper()
+            symbol = CLASSIFICATION_SYMBOLS_STR.get(classification_str, "")
+            color = CLASSIFICATION_COLORS_STR.get(classification_str)
         
         # Create text
         text = f"{move.san} {symbol}".strip()
