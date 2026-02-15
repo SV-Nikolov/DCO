@@ -84,6 +84,8 @@ class ChessEngine:
             "stockfish",
             "engines/stockfish*.exe",
             "engines/stockfish",
+            "dco/stockfish/stockfish*.exe",
+            "dco/stockfish/stockfish",
         ]
         
         for pattern in search_patterns:
