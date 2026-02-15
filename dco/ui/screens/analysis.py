@@ -62,7 +62,14 @@ class AnalysisWorker(QThread):
             self.finished.emit(True, f"Analysis complete! Accuracy: White {result.accuracy_white:.1f}%, Black {result.accuracy_black:.1f}%")
             
         except Exception as e:
-            self.finished.emit(False, f"Analysis failed: {str(e)}")
+            error_msg = str(e)
+            if "Stockfish not found" in error_msg:
+                error_msg += "\n\nTo install Stockfish:\n"
+                error_msg += "1. Download from: https://stockfishchess.org/download/\n"
+                error_msg += "2. Extract the ZIP file\n"
+                error_msg += "3. Copy stockfish.exe to the DCO directory\n"
+                error_msg += "\nSee INSTALL_STOCKFISH.md for detailed instructions."
+            self.finished.emit(False, f"Analysis failed: {error_msg}")
 
 
 class AnalysisScreen(QWidget):
@@ -81,6 +88,17 @@ class AnalysisScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
+        # Set widget background and text color
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                color: #1f2937;
+            }
+            QLabel {
+                color: #1f2937;
+            }
+        """)
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
@@ -450,4 +468,10 @@ class AnalysisScreen(QWidget):
             if self.current_game:
                 self.load_game(self.current_game.id)
         else:
-            QMessageBox.critical(self, "Analysis Failed", message)
+            # Show detailed error message
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setWindowTitle("Analysis Failed")
+            msg_box.setText(message)
+            msg_box.setStandardButtons(QMessageBox.Ok)
+            msg_box.exec()

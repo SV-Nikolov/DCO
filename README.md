@@ -13,21 +13,34 @@ A desktop Python application for chess training and improvement based on your ow
 
 ## Installation
 
-1. Ensure Python 3.11+ is installed
-2. Install dependencies:
+### 1. Install Python Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Run the application:
+### 2. Install Stockfish Chess Engine
+
+**DCO requires Stockfish to analyze games.**
+
+**Quick Install (Windows)**:
+1. Download Stockfish: https://stockfishchess.org/download/
+2. Extract the ZIP file
+3. Copy `stockfish.exe` to the DCO directory (`C:\Source\DCO\`)
+4. Done!
+
+For detailed instructions, see [INSTALL_STOCKFISH.md](INSTALL_STOCKFISH.md)
+
+### 3. Run the Application
+
 ```bash
 python app.py
 ```
 
 ## Requirements
 
-- Python >= 3.11, < 3.13
-- Stockfish chess engine (will be auto-detected or can be configured in settings)
+- Python >= 3.11 (Python 3.13+ recommended)
+- Stockfish chess engine (see installation instructions above)
 
 ## Project Structure
 
