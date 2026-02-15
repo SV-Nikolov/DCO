@@ -177,16 +177,17 @@ class ChessEngine:
         
         # Extract primary evaluation
         primary_info = info if isinstance(info, dict) else info[0]
-        score = primary_info.get("score", chess.engine.Score(None, None))
+        score = primary_info.get("score")
         
         # Convert score to centipawns (from White's perspective)
         score_cp = None
         score_mate = None
         
-        if score.is_mate():
-            score_mate = score.white().mate()
-        else:
-            score_cp = score.white().score()
+        if score:
+            if score.is_mate():
+                score_mate = score.white().mate()
+            else:
+                score_cp = score.white().score()
         
         # Extract best move and PV lines
         best_move = primary_info.get("pv", [None])[0]

@@ -24,6 +24,31 @@ def main():
     # Set application-wide style
     app.setStyle("Fusion")
     
+    # Set global stylesheet for text visibility
+    app.setStyleSheet("""
+        QWidget {
+            color: #1f2937;
+        }
+        QLabel {
+            color: #1f2937;
+        }
+        QPushButton {
+            color: #1f2937;
+        }
+        QLineEdit {
+            color: #1f2937;
+        }
+        QTextEdit {
+            color: #1f2937;
+        }
+        QCheckBox {
+            color: #1f2937;
+        }
+        QComboBox {
+            color: #1f2937;
+        }
+    """)
+    
     # Initialize database
     try:
         db = init_database()

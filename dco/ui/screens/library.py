@@ -28,6 +28,17 @@ class LibraryScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
+        # Set base styling for visibility
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                color: #1f2937;
+            }
+            QLabel {
+                color: #1f2937;
+            }
+        """)
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
@@ -108,9 +119,11 @@ class LibraryScreen(QWidget):
                 border-radius: 6px;
                 background-color: white;
                 gridline-color: #e5e7eb;
+                color: #1f2937;
             }
             QTableWidget::item {
                 padding: 8px;
+                color: #1f2937;
             }
             QHeaderView::section {
                 background-color: #f3f4f6;

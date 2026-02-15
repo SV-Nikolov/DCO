@@ -26,6 +26,9 @@ class StatCard(QFrame):
                 border-radius: 8px;
                 padding: 20px;
             }
+            QLabel {
+                color: #1f2937;
+            }
         """)
         
         layout = QVBoxLayout(self)
@@ -50,6 +53,17 @@ class HomeScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
+        # Set base styling for visibility
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                color: #1f2937;
+            }
+            QLabel {
+                color: #1f2937;
+            }
+        """)
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(30)

@@ -31,6 +31,7 @@ class NavigationButton(QPushButton):
                 padding: 15px 20px;
                 background-color: transparent;
                 font-size: 14px;
+                color: #1f2937;
             }
             QPushButton:checked {
                 background-color: #2563eb;
@@ -39,6 +40,7 @@ class NavigationButton(QPushButton):
             }
             QPushButton:hover:!checked {
                 background-color: #e5e7eb;
+                color: #1f2937;
             }
         """)
 

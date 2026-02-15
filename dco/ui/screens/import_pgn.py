@@ -53,6 +53,17 @@ class ImportScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
+        # Set base styling for visibility
+        self.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                color: #1f2937;
+            }
+            QLabel {
+                color: #1f2937;
+            }
+        """)
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
@@ -76,7 +87,7 @@ class ImportScreen(QWidget):
         
         self.skip_duplicates_cb = QCheckBox("Skip duplicate games")
         self.skip_duplicates_cb.setChecked(True)
-        self.skip_duplicates_cb.setStyleSheet("font-size: 14px;")
+        self.skip_duplicates_cb.setStyleSheet("font-size: 14px; color: #1f2937;")
         options_layout.addWidget(self.skip_duplicates_cb)
         
         options_layout.addStretch()
@@ -105,8 +116,8 @@ class ImportScreen(QWidget):
                 border-radius: 6px;
                 padding: 10px;
                 font-family: monospace;
-                font-size: 12px;
-            }
+                font-size: 12px;                color: #1f2937;
+                background-color: white;            }
         """)
         layout.addWidget(self.pgn_text, 1)  # Stretch to fill space
         
