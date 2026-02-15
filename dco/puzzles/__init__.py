@@ -1,0 +1,1 @@
+"""Puzzle system for DCO."""

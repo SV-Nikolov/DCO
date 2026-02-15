@@ -1,0 +1,610 @@
+# Daily Chess Offline (DCO) — Copilot Development Spec (Python)
+
+## 0) Purpose & Core Promise
+**Daily Chess Offline (DCO)** is a desktop Python app that helps users improve through short, repeatable training loops based on **their own past mistakes**.  
+It supports:
+1) **Play vs Engine** (offline) with adjustable strength and time controls  
+2) **Import games from Chess.com** (PGN) and analyze them locally  
+3) Build a **searchable game database** + **statistics dashboard**  
+4) Auto-generate a **Practice Database** from blunders/mistakes/critical moments and drill the user until habits improve  
+5) A **Puzzle Menu** (offline puzzle sets + optionally generated from your own games)
+
+The design should feel like: *Chess.com Game Review + a personal weakness trainer* (but offline).
+
+---
+
+## 1) Product Requirements (User-Facing)
+
+### 1.1 Main Modes
+#### A) Play vs Computer (Offline)
+User selects:
+- Opponent strength: **1000–3200 Elo** (mapped to engine skill settings)
+- Time control presets: **Bullet / Blitz / Rapid**
+  - Bullet: 1–2 min
+  - Blitz: 3–5 min
+  - Rapid: 8–10 min
+  - (Allow custom: 1–10 minutes)
+- Color: **White / Black / Random**
+- Optional toggles:
+  - Increment (0–5 sec)
+  - Takebacks: Off / On (training friendly)
+  - Hints: Off / On (show top N engine moves)
+  - Coach mode: highlights tactical threats after move
+  - Auto-save finished game into DB
+
+#### B) Import & Analyze Chess.com Games (PGN)
+User can:
+- Paste PGN text
+- Import `.pgn` file(s) in batch
+- Tag metadata at import:
+  - Game type (Bullet/Blitz/Rapid/Classical)
+  - Rated/unrated (if known)
+  - Opponent, date, color, result, termination, time control
+- Save to database and run local analysis:
+  - Move-by-move evaluation
+  - Classifications: blunder/mistake/inaccuracy/good/excellent/best/critical/brilliant/book
+  - Accuracy % and estimated gameplay Elo
+
+---
+
+## 2) UX / UI Description (Desktop App)
+
+### 2.1 UI Framework
+Use **PySide6 (Qt)** for a modern desktop UI and strong widget support.
+- Primary layout: left navigation rail + main content area
+- Dark/light theme toggle
+- Chessboard: use `python-chess` SVG rendered into Qt, or a dedicated Qt chessboard widget
+- Smooth piece animation optional; prioritize correctness first
+
+### 2.2 Navigation (Left Rail)
+- **Home**
+- **Play**
+- **Import**
+- **Library**
+- **Analysis**
+- **Practice**
+- **Puzzles**
+- **Statistics**
+- **Settings**
+
+### 2.3 Screen Details
+
+#### Home
+- “Continue Practice” button (resumes latest practice set)
+- Quick stats: last 7 days accuracy, total games imported, most common blunder motif
+- Recent activity list: last 10 games & last 10 practice sessions
+
+#### Play
+- Setup panel (strength, time, color, toggles)
+- Start button
+- In-game:
+  - Board, move list, clocks
+  - Buttons: Resign / Offer Draw (optional) / Restart / Save & Exit
+  - Optional coach: after user move, show “Threats” and “Best line” if enabled
+
+#### Import
+- PGN paste box + “Import”
+- File picker + batch import
+- Duplicates handling:
+  - Detect by (date + players + moves hash)
+  - Skip / overwrite / import as duplicate
+
+#### Library (Game Database)
+Table view with filters and search:
+- Columns: Date, Opponent, Color, Time Control, Result, Accuracy, Estimated Elo, Tags
+- Filter chips: Color / Game Type / Won-Lost-Draw / Difficulty (if vs engine) / Date range
+- Full-text search including:
+  - Player names
+  - Event/Site
+  - Opening (if detected)
+  - Move sequence substring (SAN)
+
+Click a game → opens Analysis view.
+
+#### Analysis (Game Review)
+- Board + move list
+- For each move:
+  - eval before / eval after (centipawns)
+  - classification label
+  - show top 3 engine lines (toggle)
+  - mark critical positions and mistakes
+- Summary panel:
+  - Accuracy %
+  - Estimated performance rating (gameplay Elo)
+  - Mistake count by type
+  - Opening name + novelty (optional)
+- “Add to Practice” button (auto-added by default)
+
+#### Practice (The “Gamechanger”)
+Goal: drill *your personal weak positions*.
+
+Practice session flow:
+1) Choose settings:
+   - Target categories: blunders / mistakes / critical-only
+   - Difficulty: “Strict” (must play best) or “Lenient” (top N acceptable)
+   - Session length: 5 / 10 / 20 / Custom positions
+   - Spaced repetition mode: On/Off
+2) The app loads a position **a few moves before the mistake** (configurable offset: 1–4 plies)
+3) User must play the correct sequence:
+   - If wrong:
+     - draw red arrow from start → end
+     - show correct move (and short explanation tag if available)
+     - allow “Try again” from same position
+   - If correct:
+     - continue to next move in the sequence (if multi-move lesson)
+4) Session accuracy bar:
+   - Shows % correct on first try and overall attempts
+5) End screen:
+   - Accuracy
+   - Time spent
+   - Weak motifs encountered
+   - Next recommended session
+
+Practice position cards should have:
+- Source game reference
+- Side to move
+- Category (blunder/mistake/critical)
+- Motif tag (fork/pin/back-rank/overload/etc.) if detected
+- Spaced repetition state (interval, due date)
+
+#### Puzzles
+- Offline puzzle sets (PGN/EPD/FEN + solution lines)
+- Also “From My Games” puzzles:
+  - convert best tactical moments / missed wins into puzzles
+  - category: mate, win material, tactic, defense
+- Puzzle rating progression optional
+
+#### Statistics
+Dashboard with:
+- Date range selector (last 7/30/90/custom)
+- Graphs:
+  - Accuracy over time (line)
+  - Estimated Elo over time (line)
+  - Blunders per game (bar)
+  - Mistakes by motif (pie or bar)
+- Summary:
+  - Most common error categories
+  - Performance by time control
+  - Performance by color
+  - Opening performance (optional)
+
+---
+
+## 3) Engine & Analysis Logic
+
+### 3.1 Engine Choice (Offline)
+Use **Stockfish** via:
+- `python-chess` + UCI engine (`chess.engine.SimpleEngine.popen_uci()`)
+
+Provide user setting:
+- Engine path auto-detect (bundled binary optional depending on platform/licensing)
+- Threads, hash size, analysis depth/time per move
+
+### 3.2 Evaluation Units
+Use:
+- Centipawn evaluation for normal positions
+- Mate scores tracked separately
+
+Normalize evaluations from side-to-move perspective and/or always from White’s perspective (choose one consistently).
+
+### 3.3 Move Classification
+We need deterministic rules. Define:
+- `best_move`: engine PV #1
+- `alt_moves`: PV #2..N (N configurable)
+- `eval_before`: engine eval for position before move
+- `eval_after`: engine eval after user move (re-run engine or use PV follow)
+
+Define `delta = eval_after - eval_best_after` or `delta = eval_before - eval_after` depending on approach.
+Preferred: **compare user move vs best move from the same position**.
+
+**Book move**
+- If move matches a known opening database within first N plies (default: 12 plies)
+- Opening DB options:
+  - shipped polyglot book
+  - or small curated PGN opening tree
+
+**Best**
+- user move equals engine best move (PV #1)
+
+**Excellent**
+- within a small centipawn window of best (e.g., <= 15 cp) AND not a sacrifice flagged as brilliant
+
+**Good**
+- moderate loss window (e.g., 15–50 cp)
+
+**Inaccuracy**
+- 50–100 cp loss
+
+**Mistake**
+- 100–200 cp loss
+
+**Blunder**
+- >200 cp loss OR changes evaluation from winning to losing significantly OR allows forced mate
+
+**Critical**
+- “Only 1 good move”:
+  - engine best move keeps eval within acceptable bound
+  - all other legal moves lose more than a threshold (e.g., >120 cp) or drop from non-losing to losing
+  - optionally require: position is sharp (tactics) or eval swing high
+
+**Brilliant**
+- A strong sacrifice that is engine-approved and non-obvious.
+Implement practical heuristic:
+- user move is in top engine choices (Best/Excellent)
+- move sacrifices material (piece/exchange/pawn) with no immediate equal recapture
+- compensation remains strong after deeper verification (e.g., re-analyze at deeper depth/time)
+- optional: “non-obvious” heuristic:
+  - not a check, not a forced recapture, not the only move
+  - and/or engine PV contains tactical continuation not immediately apparent
+
+> Note: Brilliant detection is inherently heuristic. Provide settings + label as “Brilliant (heuristic)” if needed.
+
+### 3.4 Accuracy % Computation
+Compute per-move score based on centipawn loss vs best.
+Example approach:
+- `cpl = max(0, eval_best - eval_user)` from the player’s perspective
+- map CPL to [0..100] via a decaying function (e.g., logistic or exponential)
+- average across all moves excluding:
+  - book moves optional
+  - forced-only moves optional
+  - very late trivial mates optional
+
+Store:
+- accuracy_total
+- accuracy_opening/middlegame/endgame splits (optional using phase detection)
+
+### 3.5 Gameplay Elo Estimation
+This is not actual rating; it’s a performance estimate.
+Implement a local heuristic:
+- Inputs:
+  - accuracy %
+  - blunders/mistakes counts
+  - average CPL
+  - opponent strength if vs engine
+  - game length normalization
+- Output:
+  - estimated performance rating
+Calibrate using baseline mapping table (configurable).
+Expose as “Performance Estimate” in UI.
+
+---
+
+## 4) Practice System (Spaced Repetition)
+
+### 4.1 What gets added to Practice DB
+From analyzed games:
+- all **blunders, mistakes, inaccuracies** (user-configurable)
+- all **critical positions**
+- optionally missed wins or missed mates found by engine
+
+For each training item store:
+- FEN at training start (offset plies before mistake)
+- side to move
+- target line (sequence of correct moves, 1–K plies)
+- tags: category, motif, opening, phase
+- metadata: source game id, move number, user color, date
+
+### 4.2 Training Rules
+- “Strict”:
+  - only accept engine best move(s) (top 1)
+- “Lenient”:
+  - accept top N moves within cp threshold (e.g., <= 30 cp)
+
+### 4.3 Spaced Repetition Scheduling
+Implement SM-2 style or simplified scheduling:
+- Each item has:
+  - ease factor
+  - interval days
+  - due date
+  - repetitions
+- Scoring:
+  - correct on first try = high quality
+  - multiple tries = lower quality
+  - wrong = fail, reset interval
+
+---
+
+## 5) Data Model & Database
+
+### 5.1 Storage
+Use **SQLite** with migrations (Alembic optional) and an ORM:
+- SQLAlchemy recommended
+
+### 5.2 Tables (Suggested)
+#### games
+- id (PK)
+- source (enum: engine_play / pgn_import)
+- event, site, date, round, white, black, result
+- white_elo, black_elo, time_control, termination
+- pgn_text
+- moves_san (optional cached)
+- created_at
+
+#### analyses
+- id (PK)
+- game_id (FK)
+- engine_version
+- depth, time_per_move
+- accuracy_white, accuracy_black
+- perf_elo_white, perf_elo_black
+- created_at
+
+#### moves
+- id (PK)
+- game_id (FK)
+- ply_index
+- san
+- uci
+- fen_before
+- fen_after
+- eval_before_cp
+- eval_best_cp
+- eval_after_cp
+- best_uci
+- classification (enum)
+- is_book (bool)
+- is_critical (bool)
+- is_brilliant (bool)
+- comment (optional)
+
+#### practice_items
+- id (PK)
+- source_game_id (FK)
+- source_ply_index
+- fen_start
+- side_to_move
+- target_line_uci (json array)
+- target_line_san (json array)
+- category (enum)
+- motif_tags (json array)
+- created_at
+
+#### practice_progress
+- id (PK)
+- practice_item_id (FK)
+- due_date
+- interval_days
+- ease_factor
+- repetitions
+- lapses
+- last_result (enum: pass_first_try / pass / fail)
+- attempts_total
+- attempts_first_try_correct
+- updated_at
+
+#### sessions
+- id (PK)
+- type (practice / puzzle / play)
+- started_at
+- ended_at
+- accuracy
+- notes (optional)
+
+---
+
+## 6) Opening Book Support
+Implement book detection using:
+- Polyglot `.bin` opening book
+- Or a simple PGN opening tree
+Rules:
+- If position is in book and move matches book move → classification “Book”
+- Store opening name if possible via ECO database (optional)
+
+---
+
+## 7) Puzzles System
+### 7.1 Sources
+- Offline puzzle pack: FEN + solution lines
+- Generated puzzles from user games:
+  - find tactics where engine eval swing indicates missed win
+  - create “best move” puzzle for side-to-move
+
+### 7.2 Puzzle Tables
+- puzzles(id, fen, side_to_move, solution_line, theme_tags, rating, source)
+- puzzle_attempts(id, puzzle_id, attempt_time, success, hints_used)
+
+---
+
+## 8) Non-Functional Requirements
+- Offline first (no network required)
+- Fast UI responsiveness:
+  - analysis must run in background thread/process (Qt worker)
+- Cross-platform (Windows/macOS/Linux)
+- Robust PGN parsing (ignore malformed headers gracefully)
+- Export:
+  - export analyzed game as annotated PGN
+  - export stats as CSV
+
+---
+
+## 9) Architecture & Project Structure
+
+### 9.1 Proposed Modules
+dco/
+app.py
+ui/
+main_window.py
+screens/
+home.py
+play.py
+import_pgn.py
+library.py
+analysis.py
+practice.py
+puzzles.py
+statistics.py
+settings.py
+widgets/
+chessboard.py
+move_list.py
+eval_bar.py
+filters.py
+charts.py
+core/
+engine.py
+analysis.py
+classification.py
+accuracy.py
+performance_rating.py
+opening_book.py
+pgn_import.py
+practice/
+generator.py
+scheduler.py
+session.py
+puzzles/
+generator.py
+solver.py
+data/
+db.py
+models.py
+migrations/
+assets/
+icons/
+books/
+puzzles/
+tests/
+
+
+### 9.2 Concurrency
+- Analysis tasks run in background to keep UI responsive:
+  - Qt `QThreadPool` + `QRunnable` or `concurrent.futures`
+- Engine calls should be serialized or use per-task engine instances.
+
+---
+
+## 10) Implementation Plan (Milestones)
+
+### Milestone 1 — Foundations
+- PySide6 app shell with navigation
+- SQLite DB with models
+- PGN import and listing in Library
+
+### Milestone 2 — Engine Integration
+- Stockfish integration
+- Single game analysis producing per-move eval + best line
+- Save analysis to DB
+
+### Milestone 3 — Classifications + Accuracy
+- Implement classification rules
+- Accuracy % computation
+- Show in Analysis UI
+
+### Milestone 4 — Practice Mode
+- Practice item generator from mistakes
+- Training UI with arrows + restart + sequence learning
+- Session accuracy bar
+
+### Milestone 5 — Statistics
+- Basic charts: accuracy & perf estimate over time
+- Filters by date/time control/color
+
+### Milestone 6 — Puzzles
+- Load offline puzzle pack
+- Generate puzzles from user games
+
+---
+
+## 11) Settings (User Options)
+- Engine path
+- Threads, hash, analysis depth or time per move
+- Classification thresholds (advanced)
+- Book detection depth
+- Practice:
+  - offset plies before mistake
+  - strict vs lenient thresholds
+  - spaced repetition on/off
+- UI:
+  - theme, board colors, piece set
+- Data:
+  - auto-backup DB
+  - export/import DB
+
+---
+
+## 12) Acceptance Criteria
+- Import PGN → stored game appears in Library
+- Analyze game → each move has:
+  - eval, best move, classification label
+- Practice mode:
+  - loads positions from own mistakes
+  - wrong move shows red arrow, reveals correct, allows retry
+  - supports multi-move sequences
+- Statistics:
+  - shows accuracy and estimated performance rating over time
+- Works fully offline
+
+---
+
+## 13) Libraries & Dependencies
+- `python-chess`
+- `PySide6`
+- `SQLAlchemy` (and optionally Alembic)
+- `matplotlib` or `pyqtgraph` for charts (choose one)
+- Optional:
+  - `pandas` for stats aggregation
+  - `numpy`
+
+---
+
+## 14) Notes for Copilot (Coding Style & Quality)
+- Use type hints everywhere
+- Separate UI from core logic
+- Avoid blocking UI thread
+- Add unit tests for:
+  - PGN parsing
+  - classification thresholds
+  - accuracy mapping
+  - practice scheduler
+- Ensure deterministic analysis by recording engine config used
+
+---
+
+## 15) Future Enhancements (Optional)
+- Lichess PGN import
+- Cloud sync (optional; keep offline-first)
+- Personalized motif detection (pin/fork/skewer/back-rank)
+- “Explain my mistake” short natural-language explanation (local templates)
+- Opening repertoire trainer built from your games
+- Endgame drill generator (tablebase integration optional)
+
+---
+
+# Daily Chess Offline (DCO) - Python dependencies
+# Python version: >=3.11,<3.13
+
+# --- Core chess + engine integration ---
+python-chess==1.999
+
+# --- Desktop UI (Qt) ---
+PySide6==6.7.3
+PySide6-Addons==6.7.3
+PySide6-Essentials==6.7.3
+
+# --- Database / ORM ---
+SQLAlchemy==2.0.36
+alembic==1.13.3
+
+# --- Data handling / stats ---
+pandas==2.2.3
+numpy==2.1.3
+
+# --- Charts (pick one; matplotlib is simplest cross-platform) ---
+matplotlib==3.9.2
+
+# --- Utilities ---
+python-dateutil==2.9.0.post0
+pydantic==2.9.2
+
+# --- Testing ---
+pytest==8.3.3
+pytest-cov==5.0.0
+
+# --- Packaging (optional but recommended if you want a distributable .exe/.app) ---
+pyinstaller==6.10.0
+
+# --- Optional: prettier SVG rendering / parsing if you render python-chess SVGs ---
+cairosvg==2.7.1
+
+# --- Optional: nicer logging formatting ---
+rich==13.9.4
