@@ -36,7 +36,7 @@ def generate_practice_items(
     target_line_plies: int = DEFAULT_TARGET_LINE_PLIES
 ) -> int:
     """
-    Generate practice items from analysis results.
+    Generate practice items from analysis results. Deletes old practice items for this game first.
 
     Args:
         session: SQLAlchemy session
@@ -57,6 +57,23 @@ def generate_practice_items(
             PracticeCategory.CRITICAL,
         ]
 
+    # Delete old practice items and their progress records for this game (for reanalysis)
+    # Delete progress records first, then items
+    session.query(PracticeProgress).filter(
+        PracticeProgress.practice_item_id.in_(
+            session.query(PracticeItem.id).filter(
+                PracticeItem.source_game_id == game.id
+            )
+        )
+    ).delete(synchronize_session='fetch')
+    
+    session.query(PracticeItem).filter(
+        PracticeItem.source_game_id == game.id
+    ).delete(synchronize_session='fetch')
+    
+    # Flush to ensure deletion happens immediately
+    session.flush()
+
     created = 0
 
     for move in analysis_result.moves:
@@ -66,14 +83,6 @@ def generate_practice_items(
 
         # Skip book moves and brilliant moves (not for practice)
         if move.is_book or move.is_brilliant:
-            continue
-
-        # Avoid duplicates for same game+ply
-        existing = session.query(PracticeItem).filter(
-            PracticeItem.source_game_id == game.id,
-            PracticeItem.source_ply_index == move.ply_index
-        ).first()
-        if existing:
             continue
 
         # Compute starting ply

@@ -7,10 +7,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QFrame, QScrollArea
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from sqlalchemy import func, desc
 
-from ...data.models import Game, Session as TrainingSession, SessionType
+from ...data.models import Game, Session as TrainingSession, SessionType, PracticeItem
 from ...data.db import Database
 
 
@@ -44,6 +44,8 @@ class StatCard(QFrame):
 
 class HomeScreen(QWidget):
     """Home screen of the application."""
+
+    practice_requested = Signal()
     
     def __init__(self, db: Database, parent=None):
         super().__init__(parent)
@@ -76,9 +78,9 @@ class HomeScreen(QWidget):
         # Quick actions
         actions_layout = QHBoxLayout()
         
-        practice_btn = QPushButton("Continue Practice")
-        practice_btn.setMinimumHeight(50)
-        practice_btn.setStyleSheet("""
+        self.practice_btn = QPushButton("Continue Practice")
+        self.practice_btn.setMinimumHeight(50)
+        self.practice_btn.setStyleSheet("""
             QPushButton {
                 background-color: #2563eb;
                 color: white;
@@ -95,8 +97,9 @@ class HomeScreen(QWidget):
                 background-color: #9ca3af;
             }
         """)
-        practice_btn.setEnabled(False)  # Disabled until we have practice items
-        actions_layout.addWidget(practice_btn)
+        self.practice_btn.setEnabled(False)  # Disabled until we have practice items
+        self.practice_btn.clicked.connect(self.practice_requested.emit)
+        actions_layout.addWidget(self.practice_btn)
         
         actions_layout.addStretch()
         layout.addLayout(actions_layout)
@@ -158,6 +161,10 @@ class HomeScreen(QWidget):
             total_sessions = session.query(func.count(TrainingSession.id)).filter(
                 TrainingSession.type == SessionType.PRACTICE
             ).scalar() or 0
+
+            # Enable practice button if we have items
+            total_practice_items = session.query(func.count(PracticeItem.id)).scalar() or 0
+            self.practice_btn.setEnabled(total_practice_items > 0)
             self.practice_card.findChild(QLabel, options=Qt.FindChildrenRecursively).setText(str(total_sessions))
             
             # Update stats card values

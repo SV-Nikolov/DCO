@@ -218,6 +218,7 @@ class PracticeProgress(Base):
     ease_factor = Column(Float, default=2.5)
     repetitions = Column(Integer, default=0)
     lapses = Column(Integer, default=0)
+    consecutive_first_try = Column(Integer, default=0)
     
     # Last attempt
     last_result = Column(Enum(PracticeResult, native_enum=False, length=20))

@@ -323,7 +323,7 @@ def save_analysis_to_db(
     analysis_result: GameAnalysisResult
 ) -> Analysis:
     """
-    Save analysis results to database.
+    Save analysis results to database. Deletes any existing analysis for this game first.
     
     Args:
         session: SQLAlchemy session
@@ -333,6 +333,16 @@ def save_analysis_to_db(
     Returns:
         Saved Analysis object
     """
+    # Delete old analysis if it exists (for reanalysis)
+    old_analysis = session.query(Analysis).filter(Analysis.game_id == game.id).first()
+    if old_analysis:
+        # Delete associated moves first
+        session.query(Move).filter(Move.game_id == game.id).delete(synchronize_session='fetch')
+        # Delete the analysis record
+        session.query(Analysis).filter(Analysis.game_id == game.id).delete(synchronize_session='fetch')
+        # Flush to ensure deletion happens immediately
+        session.flush()
+    
     # Create Analysis record
     analysis = Analysis(
         game_id=game.id,

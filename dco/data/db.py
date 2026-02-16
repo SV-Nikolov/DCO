@@ -5,7 +5,7 @@ Database initialization and session management for DCO.
 import os
 from pathlib import Path
 from typing import Optional
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
@@ -54,6 +54,9 @@ class Database:
         
         # Create all tables
         Base.metadata.create_all(bind=self.engine)
+
+        # Lightweight auto-migrations for schema and enum value fixes
+        self._auto_migrate()
         
     def get_session(self) -> Session:
         """
@@ -70,6 +73,37 @@ class Database:
         """Close the database connection."""
         if self.engine:
             self.engine.dispose()
+
+    def _auto_migrate(self) -> None:
+        """Apply lightweight schema/data migrations for SQLite."""
+        if not self.engine:
+            return
+
+        with self.engine.begin() as conn:
+            # Add missing ECO columns to games
+            games_cols = _get_table_columns(conn, "games")
+            if "eco_code" not in games_cols:
+                conn.execute(text("ALTER TABLE games ADD COLUMN eco_code VARCHAR(10)"))
+            if "opening_name" not in games_cols:
+                conn.execute(text("ALTER TABLE games ADD COLUMN opening_name VARCHAR(200)"))
+            if "opening_variation" not in games_cols:
+                conn.execute(text("ALTER TABLE games ADD COLUMN opening_variation VARCHAR(200)"))
+
+            # Normalize move classification values to enum names (uppercase)
+            moves_cols = _get_table_columns(conn, "moves")
+            if "classification" in moves_cols:
+                conn.execute(text("UPDATE moves SET classification = UPPER(classification)"))
+
+            # Add missing practice progress columns
+            progress_cols = _get_table_columns(conn, "practice_progress")
+            if "consecutive_first_try" not in progress_cols:
+                conn.execute(text("ALTER TABLE practice_progress ADD COLUMN consecutive_first_try INTEGER DEFAULT 0"))
+
+
+def _get_table_columns(conn, table_name: str) -> set:
+    """Return a set of column names for a table."""
+    result = conn.execute(text(f"PRAGMA table_info({table_name})"))
+    return {row[1] for row in result}
 
 
 # Global database instance

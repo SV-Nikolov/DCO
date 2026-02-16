@@ -15,6 +15,7 @@ from ...data.db import Database
 from ...data.models import Game, Analysis as AnalysisModel, Move
 from ...core.engine import ChessEngine, EngineConfig
 from ...core.analysis import GameAnalyzer, save_analysis_to_db
+from ...core.practice import generate_practice_items
 from ..widgets.chessboard import ChessboardWidget
 from ..widgets.move_list import MoveListWidget
 
@@ -52,6 +53,12 @@ class AnalysisWorker(QThread):
             session = self.db.get_session()
             try:
                 save_analysis_to_db(session, self.game, result)
+                generate_practice_items(
+                    session=session,
+                    game=self.game,
+                    analysis_result=result,
+                    engine=engine
+                )
                 session.commit()
             finally:
                 session.close()
