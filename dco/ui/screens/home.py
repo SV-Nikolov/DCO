@@ -45,16 +45,7 @@ class HomeScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
-        # Set base styling for visibility
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                color: #1f2937;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
+        # Styled by global stylesheet
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
@@ -62,31 +53,15 @@ class HomeScreen(QWidget):
         
         # Welcome header
         welcome_label = QLabel("Welcome to Daily Chess Offline")
-        welcome_label.setStyleSheet("font-size: 32px; font-weight: bold; color: #1f2937;")
+        welcome_label.setObjectName("screenTitle")
         layout.addWidget(welcome_label)
         
         # Quick actions
         actions_layout = QHBoxLayout()
         
         self.practice_btn = QPushButton("Continue Practice")
+        self.practice_btn.setObjectName("primaryButton")
         self.practice_btn.setMinimumHeight(50)
-        self.practice_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 0 30px;
-            }
-            QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-            QPushButton:disabled {
-                background-color: #9ca3af;
-            }
-        """)
         self.practice_btn.setEnabled(False)  # Disabled until we have practice items
         self.practice_btn.clicked.connect(self.practice_requested.emit)
         actions_layout.addWidget(self.practice_btn)
@@ -96,7 +71,7 @@ class HomeScreen(QWidget):
         
         # Stats section
         stats_label = QLabel("Quick Stats")
-        stats_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #1f2937;")
+        stats_label.setObjectName("sectionTitle")
         layout.addWidget(stats_label)
         
         # Stats cards
@@ -117,19 +92,13 @@ class HomeScreen(QWidget):
         
         # Recent activity
         activity_label = QLabel("Recent Activity")
-        activity_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #1f2937;")
+        activity_label.setObjectName("sectionTitle")
         layout.addWidget(activity_label)
         
         # Scroll area for recent games
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea {
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                background-color: white;
-            }
-        """)
+        # Styled by global stylesheet
         
         self.activity_widget = QWidget()
         self.activity_layout = QVBoxLayout(self.activity_widget)
@@ -184,7 +153,7 @@ class HomeScreen(QWidget):
                     self.activity_layout.addWidget(item)
             else:
                 no_data = QLabel("No games imported yet. Go to Import to add games.")
-                no_data.setStyleSheet("color: #6b7280; padding: 20px;")
+                no_data.setObjectName("mutedText")
                 no_data.setAlignment(Qt.AlignCenter)
                 self.activity_layout.addWidget(no_data)
         
@@ -194,22 +163,14 @@ class HomeScreen(QWidget):
     def _create_activity_item(self, game: Game) -> QWidget:
         """Create an activity item widget for a game."""
         item = QFrame()
-        item.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 15px;
-                margin-bottom: 5px;
-            }
-        """)
+        item.setObjectName("cardFrame")
         
         layout = QVBoxLayout(item)
         layout.setSpacing(5)
         
         # Players and result
         header = QLabel(f"{game.white} vs {game.black} • {game.result}")
-        header.setStyleSheet("font-size: 14px; font-weight: bold; color: #1f2937;")
+        header.setObjectName("cardTitle")
         layout.addWidget(header)
         
         # Details
@@ -222,7 +183,7 @@ class HomeScreen(QWidget):
             details.append(game.event)
         
         details_label = QLabel(" • ".join(details))
-        details_label.setStyleSheet("font-size: 12px; color: #6b7280;")
+        details_label.setObjectName("mutedText")
         layout.addWidget(details_label)
         
         return item

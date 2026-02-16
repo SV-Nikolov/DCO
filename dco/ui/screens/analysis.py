@@ -95,16 +95,7 @@ class AnalysisScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
-        # Set widget background and text color
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                color: #1f2937;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
+        # Styled by global stylesheet
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -114,29 +105,14 @@ class AnalysisScreen(QWidget):
         header_layout = QHBoxLayout()
         
         self.title_label = QLabel("Game Analysis")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #1f2937;")
+        self.title_label.setObjectName("screenTitle")
         header_layout.addWidget(self.title_label)
         
         header_layout.addStretch()
         
         self.analyze_btn = QPushButton("Analyze Game")
+        self.analyze_btn.setObjectName("primaryButton")
         self.analyze_btn.setMinimumHeight(35)
-        self.analyze_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 14px;
-                padding: 0 20px;
-            }
-            QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-            QPushButton:disabled {
-                background-color: #9ca3af;
-            }
-        """)
         self.analyze_btn.clicked.connect(self._on_analyze_clicked)
         self.analyze_btn.setVisible(False)
         header_layout.addWidget(self.analyze_btn)
@@ -145,28 +121,18 @@ class AnalysisScreen(QWidget):
         
         # Game info
         self.game_info_label = QLabel("No game selected")
-        self.game_info_label.setStyleSheet("color: #6b7280; font-size: 14px;")
+        self.game_info_label.setObjectName("mutedText")
         layout.addWidget(self.game_info_label)
         
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         self.progress_bar.setTextVisible(False)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                height: 8px;
-            }
-            QProgressBar::chunk {
-                background-color: #2563eb;
-                border-radius: 4px;
-            }
-        """)
+        # Styled by global stylesheet
         layout.addWidget(self.progress_bar)
         
         self.progress_label = QLabel("")
-        self.progress_label.setStyleSheet("color: #6b7280; font-size: 12px;")
+        self.progress_label.setObjectName("mutedText")
         self.progress_label.setVisible(False)
         layout.addWidget(self.progress_label)
         
@@ -185,41 +151,23 @@ class AnalysisScreen(QWidget):
         # Board controls
         controls_layout = QHBoxLayout()
         
-        button_style = """
-            QPushButton {
-                background-color: #f3f4f6;
-                color: #1f2937;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #e5e7eb;
-            }
-            QPushButton:disabled {
-                background-color: #f9fafb;
-                color: #9ca3af;
-            }
-        """
-        
         self.first_btn = QPushButton("⏮ First")
-        self.first_btn.setStyleSheet(button_style)
+        self.first_btn.setObjectName("secondaryButton")
         self.first_btn.clicked.connect(self._go_to_first)
         controls_layout.addWidget(self.first_btn)
         
         self.prev_btn = QPushButton("◀ Prev")
-        self.prev_btn.setStyleSheet(button_style)
+        self.prev_btn.setObjectName("secondaryButton")
         self.prev_btn.clicked.connect(self._go_to_prev)
         controls_layout.addWidget(self.prev_btn)
         
         self.next_btn = QPushButton("Next ▶")
-        self.next_btn.setStyleSheet(button_style)
+        self.next_btn.setObjectName("secondaryButton")
         self.next_btn.clicked.connect(self._go_to_next)
         controls_layout.addWidget(self.next_btn)
         
         self.last_btn = QPushButton("Last ⏭")
-        self.last_btn.setStyleSheet(button_style)
+        self.last_btn.setObjectName("secondaryButton")
         self.last_btn.clicked.connect(self._go_to_last)
         controls_layout.addWidget(self.last_btn)
         
@@ -227,14 +175,7 @@ class AnalysisScreen(QWidget):
         
         # Move info
         self.move_info_label = QLabel("")
-        self.move_info_label.setStyleSheet("""
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 13px;
-            color: #1f2937;
-        """)
+        self.move_info_label.setObjectName("cardFrame")
         self.move_info_label.setWordWrap(True)
         left_layout.addWidget(self.move_info_label)
         
@@ -249,18 +190,11 @@ class AnalysisScreen(QWidget):
         
         # Stats panel
         self.stats_frame = QFrame()
-        self.stats_frame.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 15px;
-            }
-        """)
+        self.stats_frame.setObjectName("cardFrame")
         stats_layout = QVBoxLayout(self.stats_frame)
         
         self.stats_label = QLabel("No analysis available")
-        self.stats_label.setStyleSheet("font-size: 13px; color: #1f2937;")
+        # Styled by global stylesheet
         self.stats_label.setWordWrap(True)
         stats_layout.addWidget(self.stats_label)
         
@@ -268,7 +202,7 @@ class AnalysisScreen(QWidget):
         
         # Move list
         moves_label = QLabel("Moves")
-        moves_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 15px; color: #1f2937;")
+        moves_label.setObjectName("cardTitle")
         right_layout.addWidget(moves_label)
         
         self.move_list = MoveListWidget(self)

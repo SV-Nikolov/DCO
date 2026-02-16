@@ -57,15 +57,7 @@ class PracticeScreen(QWidget):
 
     def init_ui(self):
         """Initialize UI components."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                color: #1f2937;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
+        # Styled by global stylesheet
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(30, 30, 30, 30)
@@ -73,20 +65,14 @@ class PracticeScreen(QWidget):
 
         # Settings panel
         settings = QFrame()
+        settings.setObjectName("cardFrame")
         settings.setFixedWidth(280)
-        settings.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-            }
-        """)
         settings_layout = QVBoxLayout(settings)
         settings_layout.setContentsMargins(20, 20, 20, 20)
         settings_layout.setSpacing(15)
 
         title = QLabel("Practice Settings")
-        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        title.setObjectName("sectionTitle")
         settings_layout.addWidget(title)
 
         self.blunder_cb = QCheckBox("Blunders")
@@ -103,7 +89,7 @@ class PracticeScreen(QWidget):
         settings_layout.addWidget(self.inaccuracy_cb)
 
         length_label = QLabel("Session Length")
-        length_label.setStyleSheet("font-weight: bold;")
+        length_label.setStyleSheet("font-weight: bold;")  # Keep bold inline for form labels
         settings_layout.addWidget(length_label)
 
         self.length_combo = QComboBox()
@@ -111,7 +97,7 @@ class PracticeScreen(QWidget):
         settings_layout.addWidget(self.length_combo)
 
         mode_label = QLabel("Mode")
-        mode_label.setStyleSheet("font-weight: bold;")
+        mode_label.setStyleSheet("font-weight: bold;")  # Keep bold inline for form labels
         settings_layout.addWidget(mode_label)
 
         self.strict_cb = QCheckBox("Strict (best move only)")
@@ -123,18 +109,7 @@ class PracticeScreen(QWidget):
         settings_layout.addWidget(self.due_only_cb)
 
         self.start_btn = QPushButton("Start Session")
-        self.start_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 14px;
-                font-weight: bold;
-                padding: 10px;
-            }
-            QPushButton:hover { background-color: #1d4ed8; }
-        """)
+        self.start_btn.setObjectName("primaryButton")
         self.start_btn.clicked.connect(self._start_session)
         settings_layout.addWidget(self.start_btn)
 
@@ -155,7 +130,7 @@ class PracticeScreen(QWidget):
         main = QVBoxLayout()
 
         self.status_label = QLabel("Start a practice session to begin.")
-        self.status_label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.status_label.setObjectName("cardTitle")
         main.addWidget(self.status_label)
 
         self.board_widget = ChessboardWidget(size=460)
@@ -163,7 +138,7 @@ class PracticeScreen(QWidget):
         main.addWidget(self.board_widget, alignment=Qt.AlignLeft)
 
         self.hint_label = QLabel("")
-        self.hint_label.setStyleSheet("color: #6b7280;")
+        self.hint_label.setObjectName("mutedText")
         main.addWidget(self.hint_label)
 
         self.progress_bar = QProgressBar()

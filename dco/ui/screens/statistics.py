@@ -34,15 +34,7 @@ class StatisticsScreen(QWidget):
 
     def init_ui(self) -> None:
         """Initialize the user interface."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                color: #1f2937;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
+        # Styled by global stylesheet
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -50,25 +42,19 @@ class StatisticsScreen(QWidget):
 
         header_layout = QHBoxLayout()
         title = QLabel("Statistics")
-        title.setStyleSheet("font-size: 24px; font-weight: bold;")
+        title.setObjectName("screenTitle")
         header_layout.addWidget(title)
         header_layout.addStretch()
         layout.addLayout(header_layout)
 
         controls = QFrame()
-        controls.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-            }
-        """)
+        controls.setObjectName("cardFrame")
         controls_layout = QHBoxLayout(controls)
         controls_layout.setContentsMargins(15, 10, 15, 10)
         controls_layout.setSpacing(10)
 
         range_label = QLabel("Date Range")
-        range_label.setStyleSheet("font-weight: bold;")
+        range_label.setStyleSheet("font-weight: bold;")  # Keep bold inline for form labels
         controls_layout.addWidget(range_label)
 
         self.range_combo = QComboBox()
@@ -95,32 +81,15 @@ class StatisticsScreen(QWidget):
         controls_layout.addWidget(self.end_date_edit)
 
         self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.setObjectName("primaryButton")
         self.refresh_btn.clicked.connect(self.refresh)
-        self.refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: bold;
-                padding: 6px 12px;
-            }
-            QPushButton:hover { background-color: #1d4ed8; }
-        """)
         controls_layout.addWidget(self.refresh_btn)
 
         controls_layout.addStretch()
         layout.addWidget(controls)
 
         summary = QFrame()
-        summary.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-            }
-        """)
+        summary.setObjectName("cardFrame")
         summary_layout = QHBoxLayout(summary)
         summary_layout.setContentsMargins(15, 10, 15, 10)
         summary_layout.setSpacing(20)

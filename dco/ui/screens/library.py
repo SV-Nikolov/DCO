@@ -107,17 +107,6 @@ class LibraryScreen(QWidget):
     
     def init_ui(self):
         """Initialize the user interface."""
-        # Set base styling for visibility
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                color: #1f2937;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
-        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
@@ -126,26 +115,14 @@ class LibraryScreen(QWidget):
         header_layout = QHBoxLayout()
         
         header = QLabel("Game Library")
-        header.setStyleSheet("font-size: 28px; font-weight: bold; color: #1f2937;")
+        header.setObjectName("screenTitle")
         header_layout.addWidget(header)
         
         header_layout.addStretch()
         
         self.refresh_btn = QPushButton("Refresh")
-        self.refresh_btn.setMinimumHeight(35)
-        self.refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 14px;
-                padding: 0 20px;
-            }
-            QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-        """)
+        self.refresh_btn.setObjectName("primaryButton")
+        self.refresh_btn.setMinimumHeight(40)
         self.refresh_btn.clicked.connect(self.refresh)
         header_layout.addWidget(self.refresh_btn)
         
@@ -154,21 +131,11 @@ class LibraryScreen(QWidget):
         self.batch_progress = QProgressBar()
         self.batch_progress.setVisible(False)
         self.batch_progress.setTextVisible(False)
-        self.batch_progress.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                height: 8px;
-            }
-            QProgressBar::chunk {
-                background-color: #2563eb;
-                border-radius: 4px;
-            }
-        """)
+        # Styled by global stylesheet
         layout.addWidget(self.batch_progress)
 
         self.batch_status_label = QLabel("")
-        self.batch_status_label.setStyleSheet("font-size: 12px; color: #6b7280;")
+        self.batch_status_label.setObjectName("mutedText")
         self.batch_status_label.setVisible(False)
         layout.addWidget(self.batch_status_label)
         
@@ -177,43 +144,19 @@ class LibraryScreen(QWidget):
         
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search by player names, event, or date...")
-        self.search_box.setMinimumHeight(35)
-        self.search_box.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                padding: 0 10px;
-                font-size: 14px;
-            }
-        """)
+        self.search_box.setMinimumHeight(40)
         self.search_box.textChanged.connect(self._on_search)
         filter_layout.addWidget(self.search_box, 3)
         
         self.result_filter = QComboBox()
         self.result_filter.addItems(["All Results", "White Won", "Black Won", "Draw"])
-        self.result_filter.setMinimumHeight(35)
-        self.result_filter.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                padding: 0 10px;
-                font-size: 14px;
-            }
-        """)
+        self.result_filter.setMinimumHeight(40)
         self.result_filter.currentTextChanged.connect(self._on_filter)
         filter_layout.addWidget(self.result_filter, 1)
 
         self.time_control_filter = QComboBox()
         self.time_control_filter.addItems(["All Time Controls"])
-        self.time_control_filter.setMinimumHeight(35)
-        self.time_control_filter.setStyleSheet("""
-            QComboBox {
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                padding: 0 10px;
-                font-size: 14px;
-            }
-        """)
+        self.time_control_filter.setMinimumHeight(40)
         self.time_control_filter.currentTextChanged.connect(self._on_filter)
         filter_layout.addWidget(self.time_control_filter, 1)
         
@@ -221,19 +164,13 @@ class LibraryScreen(QWidget):
 
         # Batch analysis controls
         batch_frame = QFrame()
-        batch_frame.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-            }
-        """)
+        batch_frame.setObjectName("cardFrame")
         batch_layout = QVBoxLayout(batch_frame)
         batch_layout.setContentsMargins(15, 15, 15, 15)
         batch_layout.setSpacing(10)
 
         batch_title = QLabel("Batch Analysis")
-        batch_title.setStyleSheet("font-size: 16px; font-weight: bold;")
+        batch_title.setObjectName("cardTitle")
         batch_layout.addWidget(batch_title)
 
         batch_controls = QHBoxLayout()
@@ -273,24 +210,8 @@ class LibraryScreen(QWidget):
         batch_controls.addWidget(self.batch_include_analyzed)
 
         self.batch_analyze_btn = QPushButton("Analyze Filtered")
-        self.batch_analyze_btn.setMinimumHeight(30)
-        self.batch_analyze_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: bold;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-            QPushButton:disabled {
-                background-color: #9ca3af;
-            }
-        """)
+        self.batch_analyze_btn.setObjectName("primaryButton")
+        self.batch_analyze_btn.setMinimumHeight(36)
         self.batch_analyze_btn.clicked.connect(self._on_batch_analyze)
         batch_controls.addWidget(self.batch_analyze_btn)
 
@@ -307,27 +228,7 @@ class LibraryScreen(QWidget):
         ])
         
         # Configure table
-        self.table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
-                background-color: white;
-                gridline-color: #e5e7eb;
-                color: #1f2937;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                color: #1f2937;
-            }
-            QHeaderView::section {
-                background-color: #f3f4f6;
-                padding: 10px;
-                border: none;
-                border-bottom: 2px solid #d1d5db;
-                font-weight: bold;
-                color: #1f2937;
-            }
-        """)
+        # Styled by global stylesheet
         
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
@@ -351,7 +252,7 @@ class LibraryScreen(QWidget):
         
         # Status bar
         self.status_label = QLabel("No games in library")
-        self.status_label.setStyleSheet("font-size: 12px; color: #6b7280;")
+        self.status_label.setObjectName("mutedText")
         layout.addWidget(self.status_label)
 
         today = datetime.utcnow().date()
