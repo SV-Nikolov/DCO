@@ -15,6 +15,7 @@ from .screens.library import LibraryScreen
 from .screens.import_pgn import ImportScreen
 from .screens.analysis import AnalysisScreen
 from .screens.practice import PracticeScreen
+from .screens.puzzles import PuzzleScreen
 from .screens.statistics import StatisticsScreen
 from ..data.db import get_db
 
@@ -147,11 +148,9 @@ class MainWindow(QMainWindow):
         self.practice_screen = PracticeScreen(self.db)
         self.content_stack.addWidget(self.practice_screen)
         
-        # Puzzles screen (placeholder)
-        puzzles_placeholder = QLabel("Puzzles - Coming Soon")
-        puzzles_placeholder.setAlignment(Qt.AlignCenter)
-        puzzles_placeholder.setObjectName("placeholderText")
-        self.content_stack.addWidget(puzzles_placeholder)
+        # Puzzles screen
+        self.puzzles_screen = PuzzleScreen(self.db)
+        self.content_stack.addWidget(self.puzzles_screen)
         
         # Statistics screen
         self.statistics_screen = StatisticsScreen(self.db)
