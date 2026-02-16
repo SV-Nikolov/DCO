@@ -78,6 +78,11 @@ class Game(Base):
     time_control = Column(String(50))
     termination = Column(String(100))
     
+    # Opening information (ECO)
+    eco_code = Column(String(10))  # e.g., "C50"
+    opening_name = Column(String(200))  # e.g., "Italian Game"
+    opening_variation = Column(String(200))  # e.g., "Giuoco Piano"
+    
     # Game content
     pgn_text = Column(Text, nullable=False)
     moves_san = Column(Text)  # Space-separated SAN moves for quick search

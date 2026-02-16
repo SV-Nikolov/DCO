@@ -3,11 +3,14 @@ Move classification logic for DCO.
 Classifies chess moves as book, best, excellent, good, inaccuracy, mistake, blunder, critical, or brilliant.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import chess
 from enum import Enum
 
 from .engine import EngineEvaluation
+
+if TYPE_CHECKING:
+    from .engine import ChessEngine
 
 
 class MoveClassification(Enum):
@@ -28,24 +31,40 @@ EXCELLENT_THRESHOLD = 15
 GOOD_THRESHOLD = 50
 INACCURACY_THRESHOLD = 100
 MISTAKE_THRESHOLD = 200
-CRITICAL_THRESHOLD = 120
-CRITICAL_OTHER_MOVES_THRESHOLD = 150
+
+# Brilliant move thresholds
+BRILLIANT_MARGIN = 30  # User eval must be within this of best eval
+BRILLIANT_MIN_SACRIFICE = 2  # Minimum material deficit to qualify as sacrifice
+
+# Critical position thresholds  
+UNIQUE_GAP = 120  # E1 - E2 gap for uniqueness
+BREADTH_GAP = 150  # E1 - median(E2..E5) gap
+WORST_GAP = 250  # E1 - E5 gap
+DECIDED_SUPPRESS = 600  # Don't mark critical if position already decided
+
+# PV horizon for sacrifice verification (plies to look ahead)
+PV_HORIZON = 8
 
 
 def classify_move(
     move: chess.Move,
     eval_before: EngineEvaluation,
-    eval_after: EngineEvaluation,
+    eval_best: EngineEvaluation,
+    eval_user: EngineEvaluation,
     is_book: bool,
-    board_before: chess.Board
+    board_before: chess.Board,
+    engine: Optional['ChessEngine'] = None
 ) -> MoveClassification:
     """
     Classify a chess move based on engine evaluation.
     
+    Compares the user's move against the best move from the SAME position.
+    
     Args:
-        move: The move played
-        eval_before: Engine evaluation before the move
-        eval_after: Engine evaluation after the move
+        move: The move played by user
+        eval_before: Engine evaluation of position before any move
+        eval_best: Engine evaluation after playing the best move
+        eval_user: Engine evaluation after playing the user's move
         is_book: Whether this is a book move
         board_before: Board position before the move
         
@@ -57,22 +76,27 @@ def classify_move(
         return MoveClassification.BOOK
     
     # Check if this is the best move
-    if eval_before.best_move and move == eval_before.best_move:
+    is_best_move = eval_before.best_move and move == eval_before.best_move
+    
+    if is_best_move:
+        # Check for critical position flag
+        if engine and _is_critical_position(eval_before, board_before, engine):
+            return MoveClassification.CRITICAL
+        
         # Check for brilliant (strong sacrifice)
-        if _is_brilliant_move(move, eval_before, eval_after, board_before):
-            return MoveClassification.BRILLIANT
+        if engine and not is_book:
+            if _is_brilliant_move(move, eval_before, eval_best, eval_user, board_before, engine):
+                return MoveClassification.BRILLIANT
+        
         return MoveClassification.BEST
     
-    # Check for critical position (only one good move)
-    if _is_critical_position(eval_before, board_before):
-        return MoveClassification.CRITICAL
-    
     # Calculate centipawn loss
-    cp_loss = _calculate_cp_loss(eval_before, eval_after, board_before.turn)
+    cp_loss = _calculate_cp_loss(eval_best, eval_user, board_before.turn)
     
     # Handle mate situations
-    if eval_before.score_mate is not None or eval_after.score_mate is not None:
-        return _classify_mate_situation(eval_before, eval_after, board_before.turn)
+    mate_classification = _classify_mate_situation(eval_best, eval_user, board_before.turn)
+    if mate_classification is not None:
+        return mate_classification
     
     # Classify based on centipawn loss
     if cp_loss is None:
@@ -80,8 +104,9 @@ def classify_move(
     
     if cp_loss <= EXCELLENT_THRESHOLD:
         # Check for brilliant among excellent moves
-        if _is_brilliant_move(move, eval_before, eval_after, board_before):
-            return MoveClassification.BRILLIANT
+        if engine and not is_book:
+            if _is_brilliant_move(move, eval_before, eval_best, eval_user, board_before, engine):
+                return MoveClassification.BRILLIANT
         return MoveClassification.EXCELLENT
     elif cp_loss <= GOOD_THRESHOLD:
         return MoveClassification.GOOD
@@ -94,155 +119,324 @@ def classify_move(
 
 
 def _calculate_cp_loss(
-    eval_before: EngineEvaluation,
-    eval_after: EngineEvaluation,
+    eval_best: EngineEvaluation,
+    eval_user: EngineEvaluation,
     side_to_move: chess.Color
 ) -> Optional[int]:
     """
-    Calculate centipawn loss from a move.
+    Calculate centipawn loss from user move compared to best move.
+    
+    CPL = max(0, eval_best - eval_user) from the perspective of the player who moved.
     
     Args:
-        eval_before: Evaluation before the move
-        eval_after: Evaluation after the move (from opponent's perspective)
+        eval_best: Evaluation after best move
+        eval_user: Evaluation after user's move
         side_to_move: Color of the side that moved
         
     Returns:
-        Centipawn loss (always positive), or None if cannot calculate
+        Centipawn loss (always non-negative), or None if cannot calculate
     """
-    if eval_before.score_cp is None or eval_after.score_cp is None:
+    if eval_best.score_cp is None or eval_user.score_cp is None:
         return None
     
-    # Both scores are from White's perspective
-    # After the move, the position is from opponent's perspective but eval is still from White's
-    score_before = eval_before.score_cp
-    score_after = eval_after.score_cp
-    
-    # Calculate loss from moving player's perspective
+    # Both evaluations are from White's perspective
+    # Convert to moving player's perspective
     if side_to_move == chess.WHITE:
-        # White's move: loss = before - after
-        loss = score_before - score_after
+        # White's perspective: positive is good for white
+        score_best = eval_best.score_cp
+        score_user = eval_user.score_cp
     else:
-        # Black's move: loss = after - before (since scores are from White's perspective)
-        loss = score_after - score_before
+        # Black's perspective: negate scores (negative is good for black)
+        score_best = -eval_best.score_cp
+        score_user = -eval_user.score_cp
     
-    # Loss should be non-negative (we lost or stayed same)
+    # CPL = how much worse the user move is compared to best
+    loss = score_best - score_user
+    
+    # Loss should be non-negative
     return max(0, loss)
 
 
 def _is_critical_position(
     eval_before: EngineEvaluation,
-    board: chess.Board
+    board: chess.Board,
+    engine: 'ChessEngine'
 ) -> bool:
     """
-    Determine if position is critical (only one good move).
+    Determine if position is critical (only one clearly best move).
     
-    A position is critical if:
-    - The best move keeps evaluation acceptable
-    - All other legal moves lose significantly more
+    A position is critical if ALL are true:
+    1. Best move is clearly unique (E1 - E2 >= UNIQUE_GAP)
+    2. Breadth collapses (E1 - median(E2..E5) >= BREADTH_GAP)
+    3. Worst alternative is much worse (E1 - E5 >= WORST_GAP)
+    4. Position not already decided (abs(E1) < DECIDED_SUPPRESS, except mate)
+    5. Not a book move (checked by caller)
+    
+    Uses MultiPV=5 to evaluate top 5 candidate moves.
     
     Args:
         eval_before: Engine evaluation with multiple PVs
         board: Board position
+        engine: Chess engine for MultiPV=5 analysis
         
     Returns:
         True if position is critical
     """
-    # Need at least 2 PV lines to compare
-    if len(eval_before.pv_lines) < 2:
-        return False
+    # Need MultiPV=5 analysis
+    # Save current multipv setting
+    original_multipv = engine.config.multipv
     
-    # Get best move evaluation (already in eval_before.score_cp)
-    best_score = eval_before.score_cp
-    
-    if best_score is None:
-        return False
-    
-    # In a critical position, the best move should be acceptable
-    # and other moves should be significantly worse
-    # This is a simplified heuristic - ideally we'd re-evaluate each move
-    
-    # For now, we'll use a simple heuristic:
-    # If position is sharp (eval magnitude > 200) and we have limited good moves
-    # This is a placeholder for more sophisticated detection
-    
-    if abs(best_score) > 200:  # Sharp position
+    try:
+        # Set MultiPV to 5 for critical detection
+        engine.config.multipv = 5
+        
+        # Re-evaluate position with MultiPV=5
+        multi_eval = engine.evaluate(board, depth=eval_before.depth)
+        
+        # Restore original multipv
+        engine.config.multipv = original_multipv
+        
+        # Need at least 2 moves to compare
+        if len(multi_eval.pv_lines) < 2:
+            return False
+        
+        # Extract evaluations for each candidate move
+        # We need to evaluate each PV line to get its score
+        evaluations = []
+        
+        for i, pv_line in enumerate(multi_eval.pv_lines[:5]):
+            if not pv_line:
+                continue
+            
+            # Play the first move of this PV
+            test_board = board.copy()
+            test_board.push(pv_line[0])
+            
+            # Get evaluation after this move
+            pv_eval = engine.evaluate(test_board, depth=max(15, eval_before.depth - 2))
+            
+            if pv_eval.score_cp is not None:
+                # Convert to side-to-move perspective
+                if board.turn == chess.WHITE:
+                    score = pv_eval.score_cp
+                else:
+                    score = -pv_eval.score_cp
+                evaluations.append(score)
+        
+        # Need at least 2 evaluations to compare
+        if len(evaluations) < 2:
+            return False
+        
+        E1 = evaluations[0]  # Best move
+        E2 = evaluations[1]  # Second best
+        
+        # Check 4: Suppress if already decided (unless mate-related)
+        if abs(E1) >= DECIDED_SUPPRESS:
+            # Allow critical only if it's mate-related
+            if multi_eval.score_mate is None:
+                return False
+        
+        # Check 1: Uniqueness gap (E1 - E2 >= UNIQUE_GAP)
+        if E1 - E2 < UNIQUE_GAP:
+            return False
+        
+        # Check 2: Breadth collapse (need at least 3 moves)
+        if len(evaluations) >= 3:
+            median_rest = _median(evaluations[1:5])  # E2 through E5
+            if E1 - median_rest < BREADTH_GAP:
+                return False
+        
+        # Check 3: Worst collapse (need at least 5 moves)
+        if len(evaluations) >= 5:
+            E5 = evaluations[4]
+            if E1 - E5 < WORST_GAP:
+                return False
+        
         return True
-    
-    return False
+        
+    except:
+        # If MultiPV analysis fails, not critical
+        engine.config.multipv = original_multipv
+        return False
+
+
+def _median(values: list) -> float:
+    """Calculate median of a list of numbers."""
+    if not values:
+        return 0.0
+    sorted_vals = sorted(values)
+    n = len(sorted_vals)
+    if n % 2 == 0:
+        return (sorted_vals[n//2 - 1] + sorted_vals[n//2]) / 2
+    else:
+        return sorted_vals[n//2]
 
 
 def _is_brilliant_move(
     move: chess.Move,
     eval_before: EngineEvaluation,
-    eval_after: EngineEvaluation,
-    board: chess.Board
+    eval_best: EngineEvaluation,
+    eval_user: EngineEvaluation,
+    board: chess.Board,
+    engine: 'ChessEngine'
 ) -> bool:
     """
-    Detect brilliant moves (strong, non-obvious sacrifices).
+    Detect brilliant moves (strong, non-obvious sacrifices with lasting compensation).
     
-    A move is brilliant if:
-    - It's in top engine choices (best or excellent)
-    - It sacrifices material without immediate equal recapture
-    - The compensation is strong (evaluation remains good)
-    - It's non-obvious (not a check, not forced)
+    A move is brilliant if ALL conditions are met:
+    1. Move is BEST or EXCELLENT (CPL <= 15)
+    2. Not a book move (checked by caller)
+    3. Not a recapture and not the only legal move
+    4. Sacrifices material that persists after engine PV horizon (trade-proof)
+    5. Evaluation remains strong after deeper verification (within BRILLIANT_MARGIN)
+    6. Non-obvious (not a checking move)
     
     Args:
         move: The move played
-        eval_before: Evaluation before move
-        eval_after: Evaluation after move
+        eval_before: Evaluation before any move
+        eval_best: Evaluation after best move
+        eval_user: Evaluation after user's move
         board: Board before move
+        engine: Chess engine for deeper verification
         
     Returns:
         True if move is brilliant
     """
-    # Check if move is in top choices
-    if not eval_before.best_move or move != eval_before.best_move:
-        # If not best move, check if excellent
-        cp_loss = _calculate_cp_loss(eval_before, eval_after, board.turn)
+    # A) Candidate check: Must be Best or Excellent
+    is_best = eval_before.best_move and move == eval_before.best_move
+    if not is_best:
+        cp_loss = _calculate_cp_loss(eval_best, eval_user, board.turn)
         if cp_loss is None or cp_loss > EXCELLENT_THRESHOLD:
             return False
     
-    # Check if it's a sacrifice
+    # A) Not a recapture
+    if _is_recapture(move, board):
+        return False
+    
+    # A) Not the only legal move
+    if board.legal_moves.count() <= 1:
+        return False
+    
+    # A) Not a checking move (obvious)
     board_copy = board.copy()
     board_copy.push(move)
-    
-    # Simple sacrifice detection: piece was moved to attacked square
-    # and wasn't recaptured (or recapture is not equal)
-    to_square = move.to_square
-    moving_piece = board.piece_at(move.from_square)
-    
-    if not moving_piece:
-        return False
-    
-    # Check if target square is attacked by opponent
-    is_attacked = board_copy.is_attacked_by(not board.turn, to_square)
-    
-    if not is_attacked:
-        return False
-    
-    # Check if it's a check (brilliant should be non-obvious)
     if board_copy.is_check():
         return False
     
-    # Check if material was sacrificed (piece value >= pawn)
-    piece_value = _get_piece_value(moving_piece.piece_type)
-    if piece_value < 1:  # Less than a pawn
+    # B) Trade-proof sacrifice detection
+    material_before = _calculate_material(board, board.turn)
+    
+    # Apply user move
+    board_after = board.copy()
+    board_after.push(move)
+    material_immediate = _calculate_material(board_after, board.turn)
+    
+    # If no material lost immediately, not a sacrifice
+    if material_immediate >= material_before:
         return False
     
-    # Check if evaluation remains strong (good compensation)
-    if eval_after.score_cp is None:
-        return False
+    # Check if material deficit persists after PV horizon
+    # Play out engine's PV continuation for PV_HORIZON plies
+    pv_board = board_after.copy()
+    pv_moves_played = 0
     
-    # From moving player's perspective, eval should still be decent
-    score = eval_after.score_cp
-    if board.turn == chess.BLACK:
-        score = -score
+    if eval_user.pv_lines and len(eval_user.pv_lines) > 0:
+        pv = eval_user.pv_lines[0]
+        for pv_move in pv[:PV_HORIZON]:
+            if pv_board.is_game_over():
+                break
+            try:
+                pv_board.push(pv_move)
+                pv_moves_played += 1
+            except:
+                break
     
-    # Should maintain at least -50 cp (slight disadvantage OK for brilliant)
-    if score < -50:
+    # Calculate material after horizon (only if we got some moves)
+    if pv_moves_played >= 4:  # Need at least 4 plies (2 full moves) of continuation
+        material_horizon = _calculate_material(pv_board, board.turn)
+        
+        # If material returns to within 1 point, it's a trade, not sacrifice
+        if material_horizon >= material_before - 1:
+            return False
+        
+        # Must remain down at least BRILLIANT_MIN_SACRIFICE
+        if material_before - material_horizon < BRILLIANT_MIN_SACRIFICE:
+            return False
+    else:
+        # If we can't verify with PV, require immediate material loss to be significant
+        if material_before - material_immediate < BRILLIANT_MIN_SACRIFICE:
+            return False
+    
+    # C) Deeper confirmation: re-evaluate with higher depth
+    try:
+        deeper_eval = engine.evaluate(board_after, depth=(eval_user.depth + 5))
+        
+        if deeper_eval.score_cp is not None and eval_best.score_cp is not None:
+            # Convert to moving player's perspective
+            if board.turn == chess.WHITE:
+                score_best = eval_best.score_cp
+                score_deeper = deeper_eval.score_cp
+            else:
+                score_best = -eval_best.score_cp
+                score_deeper = -deeper_eval.score_cp
+            
+            # Deeper eval must remain within BRILLIANT_MARGIN of best
+            if score_deeper < score_best - BRILLIANT_MARGIN:
+                return False
+    except:
+        # If deeper eval fails, reject brilliant
         return False
     
     return True
+
+
+def _is_recapture(move: chess.Move, board: chess.Board) -> bool:
+    """
+    Check if move is a recapture.
+    
+    Args:
+        move: Move to check
+        board: Board before move
+        
+    Returns:
+        True if move recaptures on the square of the last capture
+    """
+    # Check if there was a previous move
+    if len(board.move_stack) == 0:
+        return False
+    
+    # Get last move
+    last_move = board.peek()
+    
+    # Check if last move was a capture
+    board_before_last = board.copy()
+    board_before_last.pop()
+    was_capture = board_before_last.piece_at(last_move.to_square) is not None
+    
+    if not was_capture:
+        return False
+    
+    # Check if current move recaptures on same square
+    return move.to_square == last_move.to_square and board.piece_at(move.to_square) is not None
+
+
+def _calculate_material(board: chess.Board, side: chess.Color) -> int:
+    """
+    Calculate total material for a side.
+    
+    Args:
+        board: Chess board
+        side: Color to calculate material for
+        
+    Returns:
+        Total material value
+    """
+    material = 0
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece and piece.color == side:
+            material += _get_piece_value(piece.piece_type)
+    return material
 
 
 def _get_piece_value(piece_type: chess.PieceType) -> int:
@@ -259,49 +453,62 @@ def _get_piece_value(piece_type: chess.PieceType) -> int:
 
 
 def _classify_mate_situation(
-    eval_before: EngineEvaluation,
-    eval_after: EngineEvaluation,
+    eval_best: EngineEvaluation,
+    eval_user: EngineEvaluation,
     side_to_move: chess.Color
-) -> MoveClassification:
+) -> Optional[MoveClassification]:
     """
     Classify moves in mate situations.
     
+    Mate handling:
+    - Missing mate-in-X: CRITICAL (could have forced mate, didn't)
+    - Allowing mate-in-X: BLUNDER (opponent now has forced mate)
+    - Finding mate: BEST (executed forced mate)
+    
     Args:
-        eval_before: Evaluation before move
-        eval_after: Evaluation after move
-        side_to_move: Color of side that moved
+        eval_best: Evaluation after best move
+        eval_user: Evaluation after user's move
+        side_to_move: Color that made the move
         
     Returns:
-        Move classification
+        Classification if in mate situation, None otherwise
     """
-    mate_before = eval_before.score_mate
-    mate_after = eval_after.score_mate
-    
-    # If we had mate and lost it, that's a blunder
-    if mate_before is not None:
+    # Best move leads to mate (we had forced mate available)
+    if eval_best.score_mate is not None and eval_best.score_mate > 0:
+        # From moving player's perspective
         if side_to_move == chess.WHITE:
-            # White had mate
-            if mate_before > 0:
-                # White could mate
-                if mate_after is None or mate_after <= 0:
-                    # Lost the mate
-                    return MoveClassification.BLUNDER
+            mate_for_us = eval_best.score_mate > 0
         else:
-            # Black had defense against mate
-            if mate_before < 0:
-                # Black could mate
-                if mate_after is None or mate_after >= 0:
-                    # Lost the mate
-                    return MoveClassification.BLUNDER
+            mate_for_us = eval_best.score_mate < 0
+        
+        if mate_for_us:
+            # We could have forced mate
+            # Check if user move also leads to mate
+            if eval_user.score_mate is not None:
+                if side_to_move == chess.WHITE:
+                    user_mate = eval_user.score_mate > 0
+                else:
+                    user_mate = eval_user.score_mate < 0
+                
+                if user_mate:
+                    # User found mate too (may be different line)
+                    return MoveClassification.BEST
+                else:
+                    # User move allowed opponent mate
+                    return MoveClassification.CRITICAL
+            else:
+                # User move doesn't lead to mate, missed the forced mate
+                return MoveClassification.CRITICAL
     
-    # If we allowed mate, that's a blunder
-    if mate_after is not None:
-        if side_to_move == chess.WHITE and mate_after < 0:
-            # White allowed Black to mate
-            return MoveClassification.BLUNDER
-        elif side_to_move == chess.BLACK and mate_after > 0:
-            # Black allowed White to mate
+    # User move allows mate for opponent
+    if eval_user.score_mate is not None:
+        if side_to_move == chess.WHITE:
+            opponent_has_mate = eval_user.score_mate < 0
+        else:
+            opponent_has_mate = eval_user.score_mate > 0
+        
+        if opponent_has_mate:
+            # We gave opponent forced mate
             return MoveClassification.BLUNDER
     
-    # Otherwise, use centipawn-based classification
-    return MoveClassification.GOOD
+    return None

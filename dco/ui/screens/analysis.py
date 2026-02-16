@@ -323,7 +323,21 @@ class AnalysisScreen(QWidget):
         if not self.current_game:
             return
         
+        # Build info text with ECO opening if available
         info = f"{self.current_game.white} vs {self.current_game.black}"
+        
+        if self.current_game.eco_code or self.current_game.opening_name:
+            opening_str = ""
+            if self.current_game.eco_code:
+                opening_str += self.current_game.eco_code
+            if self.current_game.opening_name:
+                if opening_str:
+                    opening_str += ": "
+                opening_str += self.current_game.opening_name
+            if self.current_game.opening_variation:
+                opening_str += f", {self.current_game.opening_variation}"
+            info += f" • {opening_str}"
+        
         if self.current_game.date:
             info += f" • {self.current_game.date}"
         if self.current_game.event:
@@ -338,7 +352,22 @@ class AnalysisScreen(QWidget):
             self.stats_label.setText("Game not analyzed yet.\nClick 'Analyze Game' to start.")
             return
         
+        # Build opening info if available
+        opening_html = ""
+        if self.current_game and (self.current_game.eco_code or self.current_game.opening_name):
+            opening_html = "<b>Opening:</b><br/>"
+            if self.current_game.eco_code:
+                opening_html += f"{self.current_game.eco_code}"
+            if self.current_game.opening_name:
+                if self.current_game.eco_code:
+                    opening_html += ": "
+                opening_html += f"{self.current_game.opening_name}"
+            if self.current_game.opening_variation:
+                opening_html += f",<br/>{self.current_game.opening_variation}"
+            opening_html += "<br/><br/>"
+        
         stats_text = f"""
+        {opening_html}
         <b>Accuracy:</b><br/>
         White: {self.current_analysis.accuracy_white:.1f}%<br/>
         Black: {self.current_analysis.accuracy_black:.1f}%<br/>
