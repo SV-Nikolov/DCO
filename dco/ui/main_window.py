@@ -14,6 +14,8 @@ from .screens.home import HomeScreen
 from .screens.library import LibraryScreen
 from .screens.import_pgn import ImportScreen
 from .screens.analysis import AnalysisScreen
+from .screens.practice import PracticeScreen
+from .screens.statistics import StatisticsScreen
 from ..data.db import get_db
 
 
@@ -145,6 +147,7 @@ class MainWindow(QMainWindow):
         """Add all screens to the content stack."""
         # Home screen
         self.home_screen = HomeScreen(self.db)
+        self.home_screen.practice_requested.connect(self._go_to_practice)
         self.content_stack.addWidget(self.home_screen)
         
         # Play screen (placeholder)
@@ -167,11 +170,9 @@ class MainWindow(QMainWindow):
         self.analysis_screen = AnalysisScreen(self.db)
         self.content_stack.addWidget(self.analysis_screen)
         
-        # Practice screen (placeholder)
-        practice_placeholder = QLabel("Practice Mode - Coming Soon")
-        practice_placeholder.setAlignment(Qt.AlignCenter)
-        practice_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
-        self.content_stack.addWidget(practice_placeholder)
+        # Practice screen
+        self.practice_screen = PracticeScreen(self.db)
+        self.content_stack.addWidget(self.practice_screen)
         
         # Puzzles screen (placeholder)
         puzzles_placeholder = QLabel("Puzzles - Coming Soon")
@@ -179,11 +180,9 @@ class MainWindow(QMainWindow):
         puzzles_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
         self.content_stack.addWidget(puzzles_placeholder)
         
-        # Statistics screen (placeholder)
-        stats_placeholder = QLabel("Statistics - Coming Soon")
-        stats_placeholder.setAlignment(Qt.AlignCenter)
-        stats_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
-        self.content_stack.addWidget(stats_placeholder)
+        # Statistics screen
+        self.statistics_screen = StatisticsScreen(self.db)
+        self.content_stack.addWidget(self.statistics_screen)
         
         # Settings screen (placeholder)
         settings_placeholder = QLabel("Settings - Coming Soon")
@@ -219,3 +218,7 @@ class MainWindow(QMainWindow):
         
         # Navigate to analysis screen (index 4)
         self._on_nav_click(4)
+
+    def _go_to_practice(self):
+        """Navigate directly to the Practice screen."""
+        self._on_nav_click(5)
