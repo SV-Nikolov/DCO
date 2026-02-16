@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
 from dco.ui.main_window import MainWindow
+from dco.ui.modern_stylesheet import load_stylesheet
 from dco.data.db import init_database
 
 
@@ -21,33 +22,8 @@ def main():
     app.setApplicationName("Daily Chess Offline")
     app.setOrganizationName("DCO")
     
-    # Set application-wide style
-    app.setStyle("Fusion")
-    
-    # Set global stylesheet for text visibility
-    app.setStyleSheet("""
-        QWidget {
-            color: #1f2937;
-        }
-        QLabel {
-            color: #1f2937;
-        }
-        QPushButton {
-            color: #1f2937;
-        }
-        QLineEdit {
-            color: #1f2937;
-        }
-        QTextEdit {
-            color: #1f2937;
-        }
-        QCheckBox {
-            color: #1f2937;
-        }
-        QComboBox {
-            color: #1f2937;
-        }
-    """)
+    # Apply modern stylesheet
+    app.setStyleSheet(load_stylesheet())
     
     # Initialize database
     try:

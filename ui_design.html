@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Chess Offline (DCO) - Chess Analysis Application</title>
+    <style>
+        /* =================================================================
+           RESET & VARIABLES
+           ================================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Chess Theme Colors */
+            --color-primary: #2563eb;
+            --color-primary-dark: #1e40af;
+            --color-primary-light: #dbeafe;
+            
+            /* Background Colors */
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-card: #1e293b;
+            --bg-secondary: #1a2332;
+            --bg-light: #f8fafc;
+            --bg-lighter: #f1f5f9;
+            
+            /* Text Colors */
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-dark: #1e293b;
+            
+            /* Accent Colors */
+            --chess-light: #f0d9b5;
+            --chess-dark: #b58863;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            ---info: #3b82f6;
+            
+            /* Utility */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* =================================================================
+           LAYOUT STRUCTURE
+           ================================================================= */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--bg-darker);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, var(--bg-secondary), var(--bg-card));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+            height: 70px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* =================================================================
+           SIDEBAR STYLING
+           ================================================================= */
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-primary), #60a5fa);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-version {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .nav-section {
+            padding: 12px 8px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            padding: 12px 16px 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            font-size: 14px;
+            position: relative;
+            user-select: none;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--color-primary), rgba(37, 99, 235, 0.7));
+            color: white;
+            font-weight: 500;
+            box-shadow: inset 3px 0 0 var(--color-primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: white;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* =================================================================
+           HEADER & NAVIGATION
+           ================================================================= */
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .screen-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 8px 16px;
+            color: var(--text-primary);
+            width: 280px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .icon-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        /* =================================================================
+           CONTENT SECTIONS
+           ================================================================= */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =================================================================
+           CARDS & PANELS
+           ================================================================= */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card:hover {
+            border-color: rgba(37, 99, 235, 0.3);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card), rgba(37, 99, 235, 0.1));
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin: 12px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border-radius: var(--radius-sm);
+            display: inline-block;
+        }
+
+        /* =================================================================
+           GRID LAYOUTS
+           ================================================================= */
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        /* =================================================================
+           BUTTONS
+           ================================================================= */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), #1e40af);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-lg {
+            padding: 14px 28px;
+            font-size: 16px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* =================================================================
+           HOME SCREEN
+           ================================================================= */
+        .home-header {
+            margin-bottom: 32px;
+        }
+
+        .home-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--color-primary), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .home-subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .recently-analyzed {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-action {
+            font-size: 14px;
+            color: var(--color-primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .section-action:hover {
+            color: #60a5fa;
+        }
+
+        /* =================================================================
+           GAME LIST / LIBRARY
+           ================================================================= */
+        .game-card {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .game-card:hover {
+            border-color: var(--color-primary);
+            background-color: rgba(37, 99, 235, 0.05);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .game-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-primary), #60a5fa);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .game-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .game-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .game-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-analyzed {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-analyzing {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-pending {
+            background-color: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
+        }
+
+        /* =================================================================
+           CHESSBOARD SECTION
+           ================================================================= */
+        .analysis-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            height: 100%;
+        }
+
+        .board-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chessboard {
+            aspect-ratio: 1;
+            background: conic-gradient(
+                var(--chess-light) 0% 25%,
+                var(--chess-dark) 0% 50%
+            ) 0 0 / 12.5% 12.5%;
+            border: 2px solid var(--text-primary);
+            border-radius: var(--radius-md);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            margin-bottom: 16px;
+        }
+
+        .board-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .board-btn {
+            padding: 8px 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .board-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: var(--color-primary);
+        }
+
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* =================================================================
+           MOVE LIST
+           ================================================================= */
+        .move-list {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .move-item {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 4px;
+        }
+
+        .move-item:hover {
+            background-color: rgba(37, 99, 235, 0.15);
+        }
+
+        .move-item.active {
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .move-number {
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* =================================================================
+           ANALYSIS PANEL
+           ================================================================= */
+        .analysis-panel {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .analysis-header {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+        }
+
+        .evaluation {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .eval-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 50px;
+        }
+
+        .eval-bar {
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            flex: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .eval-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--color-primary));
+            width: 65%;
+        }
+
+        .eval-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* =================================================================
+           PRACTICE/DRILL SECTION
+           ================================================================= */
+        .drill-card {
+            background-color: var(--bg-card);
+            border: 2px solid rgba(37, 99, 235, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .drill-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .drill-description {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .drill-button {
+            background: linear-gradient(135deg, var(--color-primary), #60a5fa);
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .drill-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* =================================================================
+           IMPORT SECTION
+           ================================================================= */
+        .import-area {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.05));
+            border: 2px dashed rgba(37, 99, 235, 0.4);
+            border-radius: var(--radius-lg);
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .import-area:hover {
+            border-color: var(--color-primary);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(96, 165, 250, 0.1));
+        }
+
+        .import-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .import-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .import-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* =================================================================
+           MODAL
+           ================================================================= */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .modal-body {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        .progress-bar {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--success));
+            width: 45%;
+            transition: width 0.4s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* =================================================================
+           RESPONSIVE
+           ================================================================= */
+        @media (max-width: 1200px) {
+            .analysis-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 180px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+            .sidebar-header {
+                padding: 16px 20px;
+            }
+
+            .nav-section {
+                display: flex;
+                gap: 8px;
+                padding: 8px;
+            }
+
+            .main-content {
+                height: auto;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                height: auto;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* =================================================================
+           SCROLLBAR STYLING
+           ================================================================= */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">♟️</div>
+                <div>
+                    <div class="sidebar-title">DCO</div>
+                    <div class="sidebar-version">v0.1.0</div>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Core</div>
+                <div class="nav-item active" onclick="switchScreen('home')">
+                    <span class="nav-icon">🏠</span>
+                    <span>Home</span>
+                </div>
+                <div class="nav-item" onclick="switchScreen('play')">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Play</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Games</div>
+                <div class="nav-item" onclick="switchScreen('import')">
+                    <span class="nav-icon">📥</span>
+                    <span>Import</span>
+                </div>
+                <div class="nav-item" onclick="switchScreen('library')">
+                    <span class="nav-icon">📚</span>
+                    <span>Library</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Analysis</div>
+                <div class="nav-item" onclick="switchScreen('analysis')">
+                    <span class="nav-icon">🔍</span>
+                    <span>Analysis</span>
+                </div>
+                <div class="nav-item" onclick="switchScreen('practice')">
+                    <span class="nav-icon">🎯</span>
+                    <span>Practice</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Other</div>
+                <div class="nav-item" onclick="switchScreen('puzzles')">
+                    <span class="nav-icon">🧩</span>
+                    <span>Puzzles</span>
+                </div>
+                <div class="nav-item" onclick="switchScreen('statistics')">
+                    <span class="nav-icon">📊</span>
+                    <span>Statistics</span>
+                </div>
+                <div class="nav-item" onclick="switchScreen('settings')">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                Daily Chess Offline<br>
+                Analysis & Training
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="screen-title" id="pageTitle">Home</div>
+                </div>
+                <div class="header-right">
+                    <input type="text" class="search-box" placeholder="Search games, players, dates...">
+                    <div class="header-actions">
+                        <button class="icon-button" title="Notifications">🔔</button>
+                        <button class="icon-button" title="Settings">⚙️</button>
+                        <button class="icon-button" title="User">👤</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT AREA -->
+            <div class="content">
+                <!-- HOME SCREEN -->
+                <section class="section active" id="home">
+                    <div class="home-header">
+                        <h1 class="home-title">Welcome Back!</h1>
+                        <p class="home-subtitle">Your chess analysis dashboard and quick stats</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Games Analyzed</div>
+                            <div class="stat-value">313</div>
+                            <div class="stat-change">↑ 47 this month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Moves</div>
+                            <div class="stat-value">8,542</div>
+                            <div class="stat-change">↑ 12% analyzed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Win Rate</div>
+                            <div class="stat-value">62%</div>
+                            <div class="stat-change">↑ 3% vs month ago</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Practice Items</div>
+                            <div class="stat-value">156</div>
+                            <div class="stat-change">📈 Keep drilling</div>
+                        </div>
+                    </div>
+
+                    <div class="recently-analyzed">
+                        <div class="section-header">
+                            <h2 class="section-title">Recently Analyzed</h2>
+                            <span class="section-action" onclick="switchScreen('library')">View All →</span>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">1</div>
+                            <div class="game-info">
+                                <div class="game-title">Kasparov vs Karpov</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Jan 15, 2024</div>
+                                    <div class="game-meta-item">⏱️ 2h 30m</div>
+                                    <div class="game-meta-item">🏆 1-0</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzed">Analyzed</span>
+                            </div>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">2</div>
+                            <div class="game-info">
+                                <div class="game-title">Fischer vs Schwarzenegger</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Jan 14, 2024</div>
+                                    <div class="game-meta-item">⏱️ 1h 45m</div>
+                                    <div class="game-meta-item">🏆 0-1</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzed">Analyzed</span>
+                            </div>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">3</div>
+                            <div class="game-info">
+                                <div class="game-title">Morphy vs Lasker</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Jan 13, 2024</div>
+                                    <div class="game-meta-item">⏱️ 2h 15m</div>
+                                    <div class="game-meta-item">🏆 1-0</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzed">Analyzed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header">
+                        <h2 class="section-title">Recommended Practice</h2>
+                    </div>
+                    <div class="grid grid-3">
+                        <div class="drill-card">
+                            <div class="drill-title">Opening Tactics</div>
+                            <div class="drill-description">27 items from your recent games</div>
+                            <button class="drill-button">Start Drill →</button>
+                        </div>
+                        <div class="drill-card">
+                            <div class="drill-title">Endgame Positions</div>
+                            <div class="drill-description">15 items to master</div>
+                            <button class="drill-button">Start Drill →</button>
+                        </div>
+                        <div class="drill-card">
+                            <div class="drill-title">Tactical Problems</div>
+                            <div class="drill-description">42 challenging positions</div>
+                            <button class="drill-button">Start Drill →</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LIBRARY SCREEN -->
+                <section class="section" id="library">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <div>
+                            <h1 class="home-title">Game Library</h1>
+                            <p class="home-subtitle">Browse and manage your chess games</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="switchScreen('import')">
+                            📥 Import Games
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                        <input type="text" class="search-box" placeholder="Search by player name, date..." style="width: 100%; max-width: none;">
+                        <select class="search-box" style="width: 150px; max-width: none;">
+                            <option>All Status</option>
+                            <option>Analyzed</option>
+                            <option>Pending</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; gap: 12px;">
+                        <div class="game-card">
+                            <div class="game-number">313</div>
+                            <div class="game-info">
+                                <div class="game-title">Capablanca vs Yates</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Feb 10, 2024</div>
+                                    <div class="game-meta-item">⏱️ Classical</div>
+                                    <div class="game-meta-item">🏆 1-0</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzed">Analyzed</span>
+                            </div>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">312</div>
+                            <div class="game-info">
+                                <div class="game-title">Positional Chess Match</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Feb 9, 2024</div>
+                                    <div class="game-meta-item">⏱️ Rapid</div>
+                                    <div class="game-meta-item">🏆 0.5-0.5</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzed">Analyzed</span>
+                            </div>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">311</div>
+                            <div class="game-info">
+                                <div class="game-title">Tal vs Smyslov</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Feb 8, 2024</div>
+                                    <div class="game-meta-item">⏱️ Blitz</div>
+                                    <div class="game-meta-item">🏆 1-0</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-analyzing">Analyzing...</span>
+                            </div>
+                        </div>
+
+                        <div class="game-card">
+                            <div class="game-number">310</div>
+                            <div class="game-info">
+                                <div class="game-title">Tournament Round 12</div>
+                                <div class="game-meta">
+                                    <div class="game-meta-item">📅 Feb 7, 2024</div>
+                                    <div class="game-meta-item">⏱️ Classical</div>
+                                    <div class="game-meta-item">🏆 0-1</div>
+                                </div>
+                            </div>
+                            <div class="game-status">
+                                <span class="status-badge status-pending">Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYSIS SCREEN -->
+                <section class="section" id="analysis">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <h1 class="home-title">Game Analysis</h1>
+                    </div>
+
+                    <div class="analysis-container">
+                        <div class="board-panel">
+                            <div class="card">
+                                <div class="chessboard"></div>
+                                <div class="board-controls">
+                                    <button class="board-btn">⏮️ Start</button>
+                                    <button class="board-btn">⏪ Back</button>
+                                    <button class="board-btn">⏩ Next</button>
+                                    <button class="board-btn">⏭️ End</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-panel">
+                            <div class="card">
+                                <div class="analysis-header">Game Information</div>
+                                <div style="display: grid; gap: 12px; font-size: 14px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                        <div>
+                                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">White</div>
+                                            <div style="font-weight: 600;">Kasparov</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Black</div>
+                                            <div style="font-weight: 600;">Karpov</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                        <div>
+                                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Date</div>
+                                            <div>Jan 15, 2024</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Result</div>
+                                            <div style="color: var(--success);">1-0 (White)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="analysis-header">Current Evaluation</div>
+                                <div class="evaluation">
+                                    <div class="eval-label">Move 23</div>
+                                    <div class="eval-bar">
+                                        <div class="eval-fill"></div>
+                                    </div>
+                                    <div class="eval-value">+2.5</div>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                                    <strong style="color: var(--text-primary);">Best Move:</strong> Nf3<br>
+                                    <strong style="color: var(--text-primary);">Played:</strong> Ng4<br>
+                                    <strong style="color: var(--warning);">Loss:</strong> -1.2 points
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="analysis-header">Move List</div>
+                                <div class="move-list">
+                                    <div class="move-item">
+                                        <span class="move-number">1.</span>e4 e5
+                                    </div>
+                                    <div class="move-item">
+                                        <span class="move-number">2.</span>Nf3 Nc6
+                                    </div>
+                                    <div class="move-item active">
+                                        <span class="move-number">3.</span>Bb5 a6
+                                    </div>
+                                    <div class="move-item">
+                                        <span class="move-number">4.</span>Ba4 Nf6
+                                    </div>
+                                    <div class="move-item">
+                                        <span class="move-number">5.</span>O-O Be7
+                                    </div>
+                                    <div class="move-item">
+                                        <span class="move-number">6.</span>Re1 b5
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- IMPORT SCREEN -->
+                <section class="section" id="import">
+                    <div class="home-header">
+                        <h1 class="home-title">Import Games</h1>
+                        <p class="home-subtitle">Add PGN files or import from chess.com, lichess, and more</p>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="import-area" onclick="document.getElementById('fileInput').click()">
+                            <div class="import-icon">📤</div>
+                            <input type="file" id="fileInput" style="display: none;" accept=".pgn">
+                            <div class="import-title">Drop PGN files here</div>
+                            <div class="import-subtitle">or click to select files from your computer</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600;">Or import from:</h3>
+                        <div class="grid grid-3">
+                            <div class="card" style="text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--color-primary)'">
+                                <div style="font-size: 40px; margin-bottom: 12px;">♟️</div>
+                                <div style="font-weight: 600; margin-bottom: 8px;">Chess.com</div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Import your games directly</div>
+                                <button class="btn btn-secondary" style="width: 100%;">Connect</button>
+                            </div>
+                            <div class="card" style="text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--color-primary)'">
+                                <div style="font-size: 40px; margin-bottom: 12px;">⚡</div>
+                                <div style="font-weight: 600; margin-bottom: 8px;">Lichess</div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Sync your Lichess games</div>
+                                <button class="btn btn-secondary" style="width: 100%;">Connect</button>
+                            </div>
+                            <div class="card" style="text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.borderColor='var(--color-primary)'">
+                                <div style="font-size: 40px; margin-bottom: 12px;">📂</div>
+                                <div style="font-weight: 600; margin-bottom: 8px;">Local Files</div>
+                                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Browse your computer</div>
+                                <button class="btn btn-secondary" style="width: 100%;">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="analysis-header">Recent Imports</div>
+                        <div style="display: grid; gap: 12px;">
+                            <div style="padding: 12px; background-color: rgba(16, 185, 129, 0.1); border-radius: var(--radius-md); border-left: 3px solid var(--success);">
+                                <div style="font-weight: 600; margin-bottom: 4px;">ChessCom_2024_01.pgn</div>
+                                <div style="font-size: 13px; color: var(--text-muted);">✓ 47 games imported - Jan 15, 2024</div>
+                            </div>
+                            <div style="padding: 12px; background-color: rgba(16, 185, 129, 0.1); border-radius: var(--radius-md); border-left: 3px solid var(--success);">
+                                <div style="font-weight: 600; margin-bottom: 4px;">Tournament_Games.pgn</div>
+                                <div style="font-size: 13px; color: var(--text-muted);">✓ 23 games imported - Jan 10, 2024</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PRACTICE SCREEN -->
+                <section class="section" id="practice">
+                    <div class="home-header">
+                        <h1 class="home-title">Practice Drills</h1>
+                        <p class="home-subtitle">Train on positions from your analyzed games</p>
+                    </div>
+
+                    <div class="grid grid-2" style="margin-bottom: 24px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Items Available</div>
+                            <div class="stat-value">156</div>
+                            <div class="stat-change">📈 From your games</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Accuracy Rate</div>
+                            <div class="stat-value">78%</div>
+                            <div class="stat-change">↑ 5% improvement</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 600;">Active Drills</h3>
+                    <div class="grid grid-2">
+                        <div class="card" style="cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-xl)'">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Opening Tactics</div>
+                                    <div style="font-size: 13px; color: var(--text-muted);">27 positions</div>
+                                </div>
+                                <div style="font-size: 24px;">🎯</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%;"></div>
+                            </div>
+                            <div class="progress-text">65% complete • 18/27 solved</div>
+                            <button class="btn btn-primary btn-block" style="margin-top: 16px;">Resume</button>
+                        </div>
+
+                        <div class="card" style="cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-xl)'">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Endgame Positions</div>
+                                    <div style="font-size: 13px; color: var(--text-muted);">15 positions</div>
+                                </div>
+                                <div style="font-size: 24px;">👑</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 40%;"></div>
+                            </div>
+                            <div class="progress-text">40% complete • 6/15 solved</div>
+                            <button class="btn btn-primary btn-block" style="margin-top: 16px;">Resume</button>
+                        </div>
+
+                        <div class="card" style="cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-xl)'">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Tactical Problems</div>
+                                    <div style="font-size: 13px; color: var(--text-muted);">42 positions</div>
+                                </div>
+                                <div style="font-size: 24px;">⚡</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 25%;"></div>
+                            </div>
+                            <div class="progress-text">25% complete • 10/42 solved</div>
+                            <button class="btn btn-primary btn-block" style="margin-top: 16px;">Resume</button>
+                        </div>
+
+                        <div class="card" style="cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='var(--shadow-xl)'">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Middle Game Ideas</div>
+                                    <div style="font-size: 13px; color: var(--text-muted);">31 positions</div>
+                                </div>
+                                <div style="font-size: 24px;">🎲</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%;"></div>
+                            </div>
+                            <div class="progress-text">0% complete • 0/31 solved</div>
+                            <button class="btn btn-primary btn-block" style="margin-top: 16px;">Start Drill</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STATISTICS SCREEN -->
+                <section class="section" id="statistics">
+                    <div class="home-header">
+                        <h1 class="home-title">Statistics & Analytics</h1>
+                        <p class="home-subtitle">Detailed insights into your chess games and progress</p>
+                    </div>
+
+                    <div class="stats-grid" style="margin-bottom: 32px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Avg Rating</div>
+                            <div class="stat-value">1950</div>
+                            <div class="stat-change">↑ 50 pts this month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Longest Game</div>
+                            <div class="stat-value">3:15</div>
+                            <div class="stat-change">⏱️ hh:mm format</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Key Strengths</div>
+                            <div class="stat-value" style="font-size: 16px; font-weight: 600;">Tactics</div>
+                            <div class="stat-change">📈 85% accuracy</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Weaknesses</div>
+                            <div class="stat-value" style="font-size: 16px; font-weight: 600;">Openings</div>
+                            <div class="stat-change">📉 42% accurate</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-2" style="gap: 24px;">
+                        <div class="card">
+                            <div class="analysis-header" style="margin-bottom: 16px;">Win Rate by Time Control</div>
+                            <div style="display: grid; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="width: 100px;">Classical</div>
+                                    <div class="eval-bar" style="width: 100%; margin: 0;">
+                                        <div class="eval-fill" style="width: 68%;"></div>
+                                    </div>
+                                    <div style="width: 40px; text-align: right;">68%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="width: 100px;">Rapid</div>
+                                    <div class="eval-bar" style="width: 100%; margin: 0;">
+                                        <div class="eval-fill" style="width: 62%;"></div>
+                                    </div>
+                                    <div style="width: 40px; text-align: right;">62%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="width: 100px;">Blitz</div>
+                                    <div class="eval-bar" style="width: 100%; margin: 0;">
+                                        <div class="eval-fill" style="width: 51%;"></div>
+                                    </div>
+                                    <div style="width: 40px; text-align: right;">51%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="analysis-header" style="margin-bottom: 16px;">Accuracy by Opening</div>
+                            <div style="display: grid; gap: 12px; font-size: 13px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>Italian Game</div>
+                                    <div style="font-weight: 600;">78%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>Sicilian Defense</div>
+                                    <div style="font-weight: 600;">65%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>Ruy Lopez</div>
+                                    <div style="font-weight: 600;">72%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>French Defense</div>
+                                    <div style="font-weight: 600;">68%</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>Caro-Kann</div>
+                                    <div style="font-weight: 600;">81%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PLACEHOLDER SCREENS -->
+                <section class="section" id="play">
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">⚔️</div>
+                        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">Play vs Computer</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 24px;">Real-time chess against Stockfish engine</p>
+                        <button class="btn btn-primary btn-lg">Coming Soon</button>
+                    </div>
+                </section>
+
+                <section class="section" id="puzzles">
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🧩</div>
+                        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">Daily Puzzles</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 24px;">Curated puzzles to improve your tactical vision</p>
+                        <button class="btn btn-primary btn-lg">Coming Soon</button>
+                    </div>
+                </section>
+
+                <section class="section" id="settings">
+                    <div style="max-width: 600px;">
+                        <h1 class="home-title" style="margin-bottom: 32px;">Settings</h1>
+
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Appearance</div>
+                            <div style="display: grid; gap: 12px;">
+                                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                    <input type="checkbox" checked style="width: 18px; height: 18px;">
+                                    <span>Dark Mode</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                    <input type="checkbox" checked style="width: 18px; height: 18px;">
+                                    <span>Show Board Coordinates</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Analysis</div>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;">Engine Depth:</label>
+                                    <input type="range" min="10" max="40" value="25" style="width: 100%;">
+                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Deeper analysis = longer wait times</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Engine Setup</div>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;">Stockfish Path:</label>
+                                    <input type="text" class="search-box" placeholder="/path/to/stockfish" style="width: 100%; max-width: none;">
+                                </div>
+                                <button class="btn btn-secondary">📂 Browse</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchScreen(screenId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => s.classList.remove('active'));
+
+            // Show selected section
+            const selectedSection = document.getElementById(screenId);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+
+            // Update nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // Find and activate the clicked nav item
+            const navButtons = document.querySelectorAll('.nav-item');
+            navButtons.forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(screenId.toLowerCase())) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update page title
+            const titleMap = {
+                'home': 'Home',
+                'play': 'Play',
+                'import': 'Import Games',
+                'library': 'Game Library',
+                'analysis': 'Game Analysis',
+                'practice': 'Practice Drills',
+                'puzzles': 'Puzzles',
+                'statistics': 'Statistics',
+                'settings': 'Settings'
+            };
+            document.getElementById('pageTitle').textContent = titleMap[screenId] || 'Home';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey) {
+                switch (e.key) {
+                    case '1': switchScreen('home'); break;
+                    case '2': switchScreen('play'); break;
+                    case '3': switchScreen('import'); break;
+                    case '4': switchScreen('library'); break;
+                    case '5': switchScreen('analysis'); break;
+                    case '6': switchScreen('practice'); break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

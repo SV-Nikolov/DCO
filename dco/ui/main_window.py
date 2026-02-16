@@ -26,25 +26,7 @@ class NavigationButton(QPushButton):
         super().__init__(text, parent)
         self.setCheckable(True)
         self.setMinimumHeight(50)
-        self.setStyleSheet("""
-            QPushButton {
-                border: none;
-                text-align: left;
-                padding: 15px 20px;
-                background-color: transparent;
-                font-size: 14px;
-                color: #1f2937;
-            }
-            QPushButton:checked {
-                background-color: #2563eb;
-                color: white;
-                border-left: 4px solid white;
-            }
-            QPushButton:hover:!checked {
-                background-color: #e5e7eb;
-                color: #1f2937;
-            }
-        """)
+        # Styling is handled by modern_stylesheet.py
 
 
 class MainWindow(QMainWindow):
@@ -75,7 +57,7 @@ class MainWindow(QMainWindow):
         
         # Content area
         self.content_stack = QStackedWidget()
-        self.content_stack.setStyleSheet("background-color: white;")
+        # Modern stylesheet handles background
         main_layout.addWidget(self.content_stack)
         
         # Add screens
@@ -88,13 +70,8 @@ class MainWindow(QMainWindow):
     def _create_navigation(self) -> QWidget:
         """Create the navigation rail."""
         nav_widget = QFrame()
+        nav_widget.setObjectName("navWidget")  # CSS styling
         nav_widget.setFixedWidth(200)
-        nav_widget.setStyleSheet("""
-            QFrame {
-                background-color: #f3f4f6;
-                border-right: 1px solid #d1d5db;
-            }
-        """)
         
         layout = QVBoxLayout(nav_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -134,11 +111,7 @@ class MainWindow(QMainWindow):
         
         # Version info
         version_label = QLabel("v0.1.0")
-        version_label.setStyleSheet("""
-            color: #6b7280;
-            padding: 10px 20px;
-            font-size: 11px;
-        """)
+        version_label.setObjectName("versionLabel")
         layout.addWidget(version_label)
         
         return nav_widget
@@ -153,7 +126,7 @@ class MainWindow(QMainWindow):
         # Play screen (placeholder)
         play_placeholder = QLabel("Play vs Computer - Coming Soon")
         play_placeholder.setAlignment(Qt.AlignCenter)
-        play_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
+        play_placeholder.setObjectName("placeholderText")
         self.content_stack.addWidget(play_placeholder)
         
         # Import screen
@@ -177,7 +150,7 @@ class MainWindow(QMainWindow):
         # Puzzles screen (placeholder)
         puzzles_placeholder = QLabel("Puzzles - Coming Soon")
         puzzles_placeholder.setAlignment(Qt.AlignCenter)
-        puzzles_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
+        puzzles_placeholder.setObjectName("placeholderText")
         self.content_stack.addWidget(puzzles_placeholder)
         
         # Statistics screen

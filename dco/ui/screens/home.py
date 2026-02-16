@@ -19,26 +19,16 @@ class StatCard(QFrame):
     
     def __init__(self, title: str, value: str, parent=None):
         super().__init__(parent)
-        self.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                padding: 20px;
-            }
-            QLabel {
-                color: #1f2937;
-            }
-        """)
+        self.setObjectName("statCard")  # Modern stylesheet styling
         
         layout = QVBoxLayout(self)
         
         title_label = QLabel(title)
-        title_label.setStyleSheet("font-size: 12px; color: #6b7280;")
+        title_label.setObjectName("statLabel")  # Modern stylesheet styling
         layout.addWidget(title_label)
         
         value_label = QLabel(value)
-        value_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #1f2937;")
+        value_label.setObjectName("statValue")  # Modern stylesheet styling
         layout.addWidget(value_label)
 
 
