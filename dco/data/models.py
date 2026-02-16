@@ -56,6 +56,18 @@ class SessionType(enum.Enum):
     PLAY = "play"
 
 
+class PuzzleTheme(enum.Enum):
+    """Theme/category of a puzzle."""
+    MATE = "mate"
+    MATERIAL = "material"
+    TACTIC = "tactic"
+    DEFENSE = "defense"
+    ENDGAME = "endgame"
+    OPENING = "opening"
+    POSITIONAL = "positional"
+    CALCULATION = "calculation"
+
+
 class Game(Base):
     """Represents a chess game."""
     __tablename__ = "games"
@@ -270,18 +282,55 @@ class Puzzle(Base):
     solution_line = Column(JSON, nullable=False)  # Array of UCI moves
     
     # Metadata
-    theme_tags = Column(JSON)  # Array of strings
+    theme = Column(Enum(PuzzleTheme, native_enum=False, length=20))  # Primary theme
+    theme_tags = Column(JSON)  # Array of additional theme strings
     rating = Column(Integer)
     source = Column(String(100))  # 'lichess', 'own_game', 'offline_pack', etc.
+    source_game_id = Column(Integer, ForeignKey("games.id"))  # Reference to user game if applicable
     
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
     attempts = relationship("PuzzleAttempt", back_populates="puzzle")
+    progress = relationship("PuzzleProgress", back_populates="puzzle", uselist=False)
+    source_game = relationship("Game")
     
     __table_args__ = (
         Index('idx_puzzle_rating', 'rating'),
         Index('idx_puzzle_source', 'source'),
+        Index('idx_puzzle_theme', 'theme'),
+    )
+
+
+class PuzzleProgress(Base):
+    """Tracks spaced repetition progress for a puzzle."""
+    __tablename__ = "puzzle_progress"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    puzzle_id = Column(Integer, ForeignKey("puzzles.id"), nullable=False, unique=True)
+    
+    # Spaced repetition data
+    due_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    interval_days = Column(Float, default=1.0)
+    ease_factor = Column(Float, default=2.5)
+    repetitions = Column(Integer, default=0)
+    lapses = Column(Integer, default=0)
+    consecutive_first_try = Column(Integer, default=0)
+    
+    # Last attempt
+    last_result = Column(Enum(PracticeResult, native_enum=False, length=20))
+    
+    # Statistics
+    attempts_total = Column(Integer, default=0)
+    attempts_correct = Column(Integer, default=0)
+    
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    puzzle = relationship("Puzzle", back_populates="progress")
+    
+    __table_args__ = (
+        Index('idx_puzzle_progress_due', 'due_date'),
     )
 
 
