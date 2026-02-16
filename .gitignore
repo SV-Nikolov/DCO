@@ -53,3 +53,6 @@ htmlcov/
 dco_data.db
 user_data/
 backups/
+
+# Stockfish binary (keep local, do not commit)
+dco/stockfish/*.exe
