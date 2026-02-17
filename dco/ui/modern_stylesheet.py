@@ -244,6 +244,33 @@ QComboBox::down-arrow {
     height: 12px;
 }
 
+/* Dropdown list styling */
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px;
+    selection-background-color: #dbeafe;
+    selection-color: #1e293b;
+    outline: none;
+}
+
+QComboBox QAbstractItemView::item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    min-height: 24px;
+}
+
+QComboBox QAbstractItemView::item:hover {
+    background-color: #f1f5f9;
+}
+
+QComboBox QAbstractItemView::item:selected {
+    background-color: #dbeafe;
+    color: #1e293b;
+}
+
 /* =================================================================
    SCROLL BARS
    ================================================================= */

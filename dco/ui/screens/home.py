@@ -81,10 +81,10 @@ class HomeScreen(QWidget):
         self.games_card = StatCard("Total Games", "0")
         self.stats_layout.addWidget(self.games_card)
         
-        self.practice_card = StatCard("Practice Sessions", "0")
+        self.practice_card = StatCard("Practice Items", "0")
         self.stats_layout.addWidget(self.practice_card)
         
-        self.accuracy_card = StatCard("Avg Accuracy", "-%")
+        self.accuracy_card = StatCard("Analyzed Games", "0")
         self.stats_layout.addWidget(self.accuracy_card)
         
         self.stats_layout.addStretch()
@@ -114,17 +114,14 @@ class HomeScreen(QWidget):
         try:
             # Get total games count
             total_games = session.query(func.count(Game.id)).scalar() or 0
-            self.games_card.findChild(QLabel, options=Qt.FindChildrenRecursively).setText(str(total_games))
             
-            # Get practice sessions count
-            total_sessions = session.query(func.count(TrainingSession.id)).filter(
-                TrainingSession.type == SessionType.PRACTICE
-            ).scalar() or 0
-
+            # Get analyzed games count
+            from ...data.models import Analysis
+            analyzed_games = session.query(func.count(Analysis.id)).scalar() or 0
+            
             # Enable practice button if we have items
             total_practice_items = session.query(func.count(PracticeItem.id)).scalar() or 0
             self.practice_btn.setEnabled(total_practice_items > 0)
-            self.practice_card.findChild(QLabel, options=Qt.FindChildrenRecursively).setText(str(total_sessions))
             
             # Update stats card values
             for card in [self.games_card, self.practice_card, self.accuracy_card]:
@@ -133,7 +130,9 @@ class HomeScreen(QWidget):
                     if card == self.games_card:
                         labels[1].setText(str(total_games))
                     elif card == self.practice_card:
-                        labels[1].setText(str(total_sessions))
+                        labels[1].setText(str(total_practice_items))
+                    elif card == self.accuracy_card:
+                        labels[1].setText(str(analyzed_games))
             
             # Get recent games
             recent_games = session.query(Game).order_by(

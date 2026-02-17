@@ -340,7 +340,11 @@ class PuzzleScreen(QWidget):
         success = self.hints_used == 0
         self.puzzle_manager.record_puzzle_attempt(self.current_puzzle.id, success, self.hints_used)
 
-        accuracy = (self.session_puzzles_solved - self.session_hints_used / max(1, self.session_puzzles_solved)) * 100
+        # Calculate accuracy: puzzles solved without hints / total puzzles
+        puzzles_without_hints = self.session_puzzles_solved - min(self.session_hints_used, self.session_puzzles_solved)
+        accuracy = (puzzles_without_hints / max(1, self.session_puzzles_solved)) * 100
+        accuracy = max(0, min(100, accuracy))  # Clamp between 0-100
+        
         self.solved_label.setText(f"Solved: {self.session_puzzles_solved}")
         self.accuracy_label.setText(f"Accuracy: {int(accuracy)}%")
 

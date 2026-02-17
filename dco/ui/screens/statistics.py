@@ -94,10 +94,10 @@ class StatisticsScreen(QWidget):
         summary_layout.setContentsMargins(15, 10, 15, 10)
         summary_layout.setSpacing(20)
 
-        self.games_label = QLabel("Games: 0")
-        self.accuracy_label = QLabel("Avg Accuracy: 0%")
-        self.elo_label = QLabel("Avg Elo: 0")
-        self.blunders_label = QLabel("Blunders/Game: 0")
+        self.games_label = QLabel("Games Analyzed: 0")
+        self.accuracy_label = QLabel("Average Accuracy: 0%")
+        self.elo_label = QLabel("Estimated Elo: 0")
+        self.blunders_label = QLabel("Avg Blunders/Game: 0.0")
 
         summary_layout.addWidget(self.games_label)
         summary_layout.addWidget(self.accuracy_label)
@@ -195,16 +195,19 @@ class StatisticsScreen(QWidget):
             total_games = len(game_ids)
             avg_accuracy = int(sum(accuracies) / total_games) if total_games else 0
             avg_elo = int(sum(elos) / total_games) if total_games else 0
+            
+            # Update summary labels
+            self.games_label.setText(f"Games Analyzed: {total_games}")
+            self.accuracy_label.setText(f"Average Accuracy: {avg_accuracy}%")
+            self.elo_label.setText(f"Estimated Elo: {avg_elo}")
 
             blunders_per_game = 0.0
+            blunder_counts = []
             if game_ids:
                 blunder_counts = self._blunder_counts(session, game_ids)
                 blunders_per_game = sum(blunder_counts) / len(blunder_counts) if blunder_counts else 0.0
-
-            self.games_label.setText(f"Games: {total_games}")
-            self.accuracy_label.setText(f"Avg Accuracy: {avg_accuracy}%")
-            self.elo_label.setText(f"Avg Elo: {avg_elo}")
-            self.blunders_label.setText(f"Blunders/Game: {blunders_per_game:.2f}")
+            
+            self.blunders_label.setText(f"Avg Blunders/Game: {blunders_per_game:.1f}")
 
             # Charts
             self._plot_line(self.accuracy_ax, "Accuracy Over Time", dates, accuracies, 0, 100)
