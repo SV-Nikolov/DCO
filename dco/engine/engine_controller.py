@@ -48,6 +48,8 @@ class EngineController:
     def _find_stockfish(self) -> str:
         """Find Stockfish executable in standard locations."""
         possible_paths = [
+            Path(__file__).parent.parent / "stockfish" / "stockfish-windows-x86-64-avx2.exe",
+            Path("dco/stockfish/stockfish-windows-x86-64-avx2.exe"),
             Path("stockfish/stockfish.exe"),
             Path("stockfish/stockfish"),
             Path("stockfish"),
@@ -57,7 +59,7 @@ class EngineController:
         
         for path in possible_paths:
             if path.exists():
-                return str(path)
+                return str(path.absolute())
         
         # Default to "stockfish" and hope it's in PATH
         return "stockfish"
