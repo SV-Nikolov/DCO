@@ -15,6 +15,7 @@ from .screens.library import LibraryScreen
 from .screens.import_pgn import ImportScreen
 from .screens.analysis import AnalysisScreen
 from .screens.practice import PracticeScreen
+from .screens.play import PlayScreen
 from .screens.puzzles import PuzzleScreen
 from .screens.statistics import StatisticsScreen
 from ..data.db import get_db
@@ -124,11 +125,9 @@ class MainWindow(QMainWindow):
         self.home_screen.practice_requested.connect(self._go_to_practice)
         self.content_stack.addWidget(self.home_screen)
         
-        # Play screen (placeholder)
-        play_placeholder = QLabel("Play vs Computer - Coming Soon")
-        play_placeholder.setAlignment(Qt.AlignCenter)
-        play_placeholder.setObjectName("placeholderText")
-        self.content_stack.addWidget(play_placeholder)
+        # Play screen
+        self.play_screen = PlayScreen(self.db)
+        self.content_stack.addWidget(self.play_screen)
         
         # Import screen
         self.import_screen = ImportScreen(self.db)
