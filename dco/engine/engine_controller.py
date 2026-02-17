@@ -89,6 +89,13 @@ class EngineController:
         """Stop the chess engine."""
         if self.engine is not None:
             try:
+                # Force terminate the engine process
+                if hasattr(self.engine, 'process') and self.engine.process:
+                    self.engine.process.terminate()
+                    try:
+                        self.engine.process.wait(timeout=1.0)
+                    except:
+                        self.engine.process.kill()  # Force kill if terminate doesn't work
                 self.engine.quit()
                 logger.info("Engine stopped")
             except Exception as e:

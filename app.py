@@ -37,6 +37,9 @@ def main():
     window = MainWindow()
     window.show()
     
+    # Ensure cleanup on quit
+    app.aboutToQuit.connect(window._cleanup_all_resources)
+    
     # Run application
     return app.exec()
 

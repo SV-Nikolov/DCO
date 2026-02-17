@@ -155,12 +155,10 @@ class MainWindow(QMainWindow):
         self.statistics_screen = StatisticsScreen(self.db)
         self.content_stack.addWidget(self.statistics_screen)
     
-    def closeEvent(self, event):
-        """Clean up resources when window is closed."""
+    def _cleanup_all_resources(self):
+        """Clean up all resources (called on app quit)."""
         # Clean up play screen engine and timers
         if hasattr(self, 'play_screen'):
-            if hasattr(self.play_screen, 'engine') and self.play_screen.engine:
-                self.play_screen.engine.quit()
             if hasattr(self.play_screen, 'game_view'):
                 if hasattr(self.play_screen.game_view, 'game_clock') and self.play_screen.game_view.game_clock:
                     self.play_screen.game_view.game_clock.stop_both()
@@ -168,7 +166,12 @@ class MainWindow(QMainWindow):
                     if self.play_screen.game_view.engine_thread.isRunning():
                         self.play_screen.game_view.engine_thread.quit()
                         self.play_screen.game_view.engine_thread.wait(500)  # Wait max 500ms
-        
+            if hasattr(self.play_screen, 'engine') and self.play_screen.engine:
+                self.play_screen.engine.quit()
+    
+    def closeEvent(self, event):
+        """Clean up resources when window is closed."""
+        self._cleanup_all_resources()
         event.accept()
         
         # Settings screen (placeholder)
