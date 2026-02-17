@@ -233,7 +233,7 @@ class PuzzleScreen(QWidget):
     def _update_board_display(self) -> None:
         """Update the board display."""
         if self.current_board and self.board_widget:
-            self.board_widget.set_position(self.current_board.copy())
+            self.board_widget.set_board(self.current_board)
             # Highlight last move if available
             if self.move_index > 0 and self.solution_moves:
                 move_uci = self.solution_moves[self.move_index - 1]
