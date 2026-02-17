@@ -154,6 +154,22 @@ class MainWindow(QMainWindow):
         # Statistics screen
         self.statistics_screen = StatisticsScreen(self.db)
         self.content_stack.addWidget(self.statistics_screen)
+    
+    def closeEvent(self, event):
+        """Clean up resources when window is closed."""
+        # Clean up play screen engine and timers
+        if hasattr(self, 'play_screen'):
+            if hasattr(self.play_screen, 'engine') and self.play_screen.engine:
+                self.play_screen.engine.quit()
+            if hasattr(self.play_screen, 'game_view'):
+                if hasattr(self.play_screen.game_view, 'game_clock') and self.play_screen.game_view.game_clock:
+                    self.play_screen.game_view.game_clock.stop_both()
+                if hasattr(self.play_screen.game_view, 'engine_thread') and self.play_screen.game_view.engine_thread:
+                    if self.play_screen.game_view.engine_thread.isRunning():
+                        self.play_screen.game_view.engine_thread.quit()
+                        self.play_screen.game_view.engine_thread.wait(500)  # Wait max 500ms
+        
+        event.accept()
         
         # Settings screen (placeholder)
         settings_placeholder = QLabel("Settings - Coming Soon")

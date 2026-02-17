@@ -841,13 +841,9 @@ class PlayScreen(QWidget):
         super().__init__(parent)
         self.db = db
         
-        # Initialize engine
+        # Initialize engine (but don't start it yet)
         self.engine = EngineController()
-        if not self.engine.start():
-            QMessageBox.critical(self, "Engine Error", 
-                               "Failed to start chess engine.\n\n"
-                               "Please ensure Stockfish is installed correctly.\n"
-                               f"Looking for: {self.engine.stockfish_path}")
+        self.engine_started = False
         
         self.init_ui()
         
@@ -877,6 +873,16 @@ class PlayScreen(QWidget):
     def _on_start_game(self, elo: int, time_minutes: int, increment: int, 
                        user_is_white: bool, takebacks: bool, hints: bool, auto_save: bool):
         """Handle game start from setup menu."""
+        # Start engine if not already started
+        if not self.engine_started:
+            if not self.engine.start():
+                QMessageBox.critical(self, "Engine Error", 
+                                   "Failed to start chess engine.\n\n"
+                                   "Please ensure Stockfish is installed correctly.\n"
+                                   f"Looking for: {self.engine.stockfish_path}")
+                return
+            self.engine_started = True
+        
         user_color = chess.WHITE if user_is_white else chess.BLACK
         self.game_view.start_game(elo, time_minutes, increment, user_color, 
                                  takebacks, hints, auto_save)
@@ -892,12 +898,19 @@ class PlayScreen(QWidget):
     
     def closeEvent(self, event):
         """Clean up when screen is closed."""
+        # Stop clocks
         if hasattr(self.game_view, 'game_clock') and self.game_view.game_clock:
             self.game_view.game_clock.stop_both()
         
+        # Stop engine thread
         if hasattr(self.game_view, 'engine_thread') and self.game_view.engine_thread is not None:
             if self.game_view.engine_thread.isRunning():
-                self.game_view.engine_thread.wait()
+                self.game_view.engine_thread.quit()
+                self.game_view.engine_thread.wait(500)  # Wait max 500ms
         
-        self.engine.quit()
+        # Quit engine
+        if self.engine_started and self.engine:
+            self.engine.quit()
+            self.engine_started = False
+        
         event.accept()
