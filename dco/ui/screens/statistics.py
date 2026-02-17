@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from string import Template
-from urllib.parse import quote
+import base64
 from typing import Dict, Optional, Tuple
 
 from PySide6.QtCore import QDate
@@ -423,7 +423,8 @@ class StatisticsScreen(QWidget):
     def _svg_to_data_uri(self, svg_markup: str) -> str:
         """Convert SVG markup to a data URI for reliable HTML rendering."""
         safe_svg = svg_markup.replace("\n", "").replace("\r", "")
-        return f"data:image/svg+xml;utf8,{quote(safe_svg)}"
+        encoded = base64.b64encode(safe_svg.encode("utf-8")).decode("ascii")
+        return f"data:image/svg+xml;base64,{encoded}"
 
     def _build_empty_state(self) -> str:
         return (
