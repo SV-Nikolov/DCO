@@ -143,11 +143,14 @@ class SettingsScreen(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(20)
         
         # Engine path
         path_group = QGroupBox("Stockfish Engine")
         path_layout = QVBoxLayout()
+        path_layout.setSpacing(10)
+        path_layout.setContentsMargins(15, 15, 15, 15)
         
         path_info = QLabel("Specify a custom Stockfish engine path (leave empty for auto-detect)")
         path_info.setStyleSheet("color: #6b7280; font-size: 12px;")
@@ -156,10 +159,12 @@ class SettingsScreen(QWidget):
         path_row = QHBoxLayout()
         self.engine_path_edit = QLineEdit()
         self.engine_path_edit.setPlaceholderText("Auto-detect")
+        self.engine_path_edit.setMinimumWidth(400)
         path_row.addWidget(self.engine_path_edit)
         
         browse_btn = QPushButton("Browse...")
         browse_btn.clicked.connect(self._browse_engine)
+        browse_btn.setMinimumWidth(100)
         path_row.addWidget(browse_btn)
         
         path_layout.addLayout(path_row)
@@ -169,16 +174,20 @@ class SettingsScreen(QWidget):
         # Engine performance
         perf_group = QGroupBox("Performance Settings")
         perf_form = QFormLayout()
+        perf_form.setSpacing(15)
+        perf_form.setContentsMargins(15, 15, 15, 15)
         
         self.engine_threads = QSpinBox()
         self.engine_threads.setRange(1, 16)
         self.engine_threads.setSuffix(" threads")
+        self.engine_threads.setMinimumWidth(150)
         perf_form.addRow("CPU Threads:", self.engine_threads)
         
         self.engine_hash = QSpinBox()
         self.engine_hash.setRange(16, 4096)
         self.engine_hash.setSingleStep(16)
         self.engine_hash.setSuffix(" MB")
+        self.engine_hash.setMinimumWidth(150)
         perf_form.addRow("Hash Table Size:", self.engine_hash)
         
         perf_group.setLayout(perf_form)
@@ -187,10 +196,13 @@ class SettingsScreen(QWidget):
         # Analysis configuration
         analysis_group = QGroupBox("Analysis Configuration")
         analysis_form = QFormLayout()
+        analysis_form.setSpacing(15)
+        analysis_form.setContentsMargins(15, 15, 15, 15)
         
         self.engine_depth = QSpinBox()
         self.engine_depth.setRange(10, 40)
         self.engine_depth.setSuffix(" plies")
+        self.engine_depth.setMinimumWidth(150)
         analysis_form.addRow("Search Depth:", self.engine_depth)
         
         self.engine_time = QDoubleSpinBox()
@@ -198,6 +210,7 @@ class SettingsScreen(QWidget):
         self.engine_time.setSingleStep(0.1)
         self.engine_time.setSuffix(" sec")
         self.engine_time.setDecimals(1)
+        self.engine_time.setMinimumWidth(150)
         analysis_form.addRow("Time per Move:", self.engine_time)
         
         analysis_group.setLayout(analysis_form)
@@ -219,11 +232,14 @@ class SettingsScreen(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(20)
         
         # General analysis options
         general_group = QGroupBox("General Options")
         general_layout = QVBoxLayout()
+        general_layout.setSpacing(10)
+        general_layout.setContentsMargins(15, 15, 15, 15)
         
         self.auto_analyze = QCheckBox("Automatically analyze imported games")
         general_layout.addWidget(self.auto_analyze)
@@ -243,25 +259,31 @@ class SettingsScreen(QWidget):
         threshold_info.setStyleSheet("color: #6b7280; font-size: 12px; margin-bottom: 10px;")
         
         threshold_form = QFormLayout()
+        threshold_form.setSpacing(15)
+        threshold_form.setContentsMargins(15, 15, 15, 15)
         
         self.threshold_excellent = QSpinBox()
         self.threshold_excellent.setRange(5, 50)
         self.threshold_excellent.setSuffix(" cp loss")
+        self.threshold_excellent.setMinimumWidth(150)
         threshold_form.addRow("Excellent (≤ X cp):", self.threshold_excellent)
         
         self.threshold_good = QSpinBox()
         self.threshold_good.setRange(20, 100)
         self.threshold_good.setSuffix(" cp loss")
+        self.threshold_good.setMinimumWidth(150)
         threshold_form.addRow("Good (≤ X cp):", self.threshold_good)
         
         self.threshold_inaccuracy = QSpinBox()
         self.threshold_inaccuracy.setRange(50, 200)
         self.threshold_inaccuracy.setSuffix(" cp loss")
+        self.threshold_inaccuracy.setMinimumWidth(150)
         threshold_form.addRow("Inaccuracy (≤ X cp):", self.threshold_inaccuracy)
         
         self.threshold_mistake = QSpinBox()
         self.threshold_mistake.setRange(100, 400)
         self.threshold_mistake.setSuffix(" cp loss")
+        self.threshold_mistake.setMinimumWidth(150)
         threshold_form.addRow("Mistake (≤ X cp):", self.threshold_mistake)
         
         threshold_layout = QVBoxLayout()
@@ -286,14 +308,18 @@ class SettingsScreen(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(20)
         
         # Practice mode
         mode_group = QGroupBox("Practice Mode")
         mode_form = QFormLayout()
+        mode_form.setSpacing(15)
+        mode_form.setContentsMargins(15, 15, 15, 15)
         
         self.practice_difficulty = QComboBox()
         self.practice_difficulty.addItems(["lenient", "strict"])
+        self.practice_difficulty.setMinimumWidth(150)
         mode_form.addRow("Difficulty:", self.practice_difficulty)
         
         self.practice_spaced_repetition = QCheckBox("Enable spaced repetition")
@@ -305,15 +331,19 @@ class SettingsScreen(QWidget):
         # Position configuration
         position_group = QGroupBox("Position Configuration")
         position_form = QFormLayout()
+        position_form.setSpacing(15)
+        position_form.setContentsMargins(15, 15, 15, 15)
         
         self.practice_offset = QSpinBox()
         self.practice_offset.setRange(1, 6)
         self.practice_offset.setSuffix(" plies before mistake")
+        self.practice_offset.setMinimumWidth(200)
         position_form.addRow("Training Start Position:", self.practice_offset)
         
         self.practice_session_length = QSpinBox()
         self.practice_session_length.setRange(5, 50)
         self.practice_session_length.setSuffix(" positions")
+        self.practice_session_length.setMinimumWidth(200)
         position_form.addRow("Default Session Length:", self.practice_session_length)
         
         position_group.setLayout(position_form)
@@ -354,14 +384,18 @@ class SettingsScreen(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(20)
         
         # Theme
         theme_group = QGroupBox("Theme")
         theme_form = QFormLayout()
+        theme_form.setSpacing(15)
+        theme_form.setContentsMargins(15, 15, 15, 15)
         
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["light", "dark"])
+        self.theme_combo.setMinimumWidth(150)
         theme_form.addRow("UI Theme:", self.theme_combo)
         
         theme_note = QLabel("Note: Theme changes require restart")
@@ -374,15 +408,20 @@ class SettingsScreen(QWidget):
         # Board appearance
         board_group = QGroupBox("Chess Board")
         board_layout = QVBoxLayout()
+        board_layout.setSpacing(10)
+        board_layout.setContentsMargins(15, 15, 15, 15)
         
         color_form = QFormLayout()
+        color_form.setSpacing(15)
         
         self.board_light_color = QLineEdit()
         self.board_light_color.setPlaceholderText("#f0d9b5")
+        self.board_light_color.setMinimumWidth(150)
         color_form.addRow("Light Squares:", self.board_light_color)
         
         self.board_dark_color = QLineEdit()
         self.board_dark_color.setPlaceholderText("#b58863")
+        self.board_dark_color.setMinimumWidth(150)
         color_form.addRow("Dark Squares:", self.board_dark_color)
         
         board_layout.addLayout(color_form)
@@ -409,14 +448,18 @@ class SettingsScreen(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(20)
         
         # User profile
         profile_group = QGroupBox("User Profile")
         profile_form = QFormLayout()
+        profile_form.setSpacing(15)
+        profile_form.setContentsMargins(15, 15, 15, 15)
         
         self.username_edit = QLineEdit()
         self.username_edit.setPlaceholderText("Your Name")
+        self.username_edit.setMinimumWidth(250)
         profile_form.addRow("Username:", self.username_edit)
         
         profile_group.setLayout(profile_form)
@@ -425,6 +468,8 @@ class SettingsScreen(QWidget):
         # Import preferences
         import_group = QGroupBox("Import Preferences")
         import_layout = QVBoxLayout()
+        import_layout.setSpacing(10)
+        import_layout.setContentsMargins(15, 15, 15, 15)
         
         self.auto_dedupe = QCheckBox("Automatically skip duplicate games when importing")
         import_layout.addWidget(self.auto_dedupe)
@@ -435,9 +480,12 @@ class SettingsScreen(QWidget):
         # Default preferences
         defaults_group = QGroupBox("Defaults")
         defaults_form = QFormLayout()
+        defaults_form.setSpacing(15)
+        defaults_form.setContentsMargins(15, 15, 15, 15)
         
         self.default_time_control = QComboBox()
         self.default_time_control.addItems(["bullet", "blitz", "rapid"])
+        self.default_time_control.setMinimumWidth(150)
         defaults_form.addRow("Default Time Control:", self.default_time_control)
         
         defaults_group.setLayout(defaults_form)
