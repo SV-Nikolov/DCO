@@ -3,6 +3,7 @@ Database initialization and session management for DCO.
 """
 
 import os
+import shutil
 from pathlib import Path
 from typing import Optional
 from sqlalchemy import create_engine, text
@@ -36,6 +37,9 @@ class Database:
         db_dir = os.path.dirname(self.db_path)
         if db_dir and not os.path.exists(db_dir):
             os.makedirs(db_dir)
+
+        # Migrate legacy database if needed
+        self._migrate_legacy_db_if_needed()
         
         # Create engine
         self.engine = create_engine(
@@ -101,6 +105,26 @@ class Database:
             progress_cols = _get_table_columns(conn, "practice_progress")
             if "consecutive_first_try" not in progress_cols:
                 conn.execute(text("ALTER TABLE practice_progress ADD COLUMN consecutive_first_try INTEGER DEFAULT 0"))
+
+    def _migrate_legacy_db_if_needed(self) -> None:
+        """Move legacy root database into data/db if needed."""
+        default_path = os.path.join(os.getcwd(), "data", "db", "dco_data.db")
+        legacy_path = os.path.join(os.getcwd(), "dco_data.db")
+
+        if self.db_path != default_path:
+            return
+
+        if not os.path.exists(legacy_path):
+            return
+
+        if os.path.exists(self.db_path) and os.path.getsize(self.db_path) > 0:
+            return
+
+        try:
+            shutil.copy2(legacy_path, self.db_path)
+            print("Migrated legacy database to data/db/dco_data.db")
+        except Exception as exc:
+            print(f"Failed to migrate legacy database: {exc}")
 
     def _create_sample_puzzles_if_empty(self) -> None:
         """Create sample puzzles if the database is empty."""
