@@ -49,7 +49,15 @@ class BatchAnalysisWorker(QThread):
         engine = None
 
         try:
-            config = EngineConfig(depth=self.depth, time_per_move=0.5)
+            # Get Stockfish path from settings
+            from ...core.settings import get_settings
+            settings = get_settings()
+            
+            config = EngineConfig(
+                path=settings.get_engine_path(),
+                depth=self.depth,
+                time_per_move=0.5
+            )
             engine = ChessEngine(config)
             engine.start()
             analyzer = GameAnalyzer(engine)
@@ -82,6 +90,21 @@ class BatchAnalysisWorker(QThread):
                     self.progress.emit(idx, total, game_id)
 
             self.finished.emit(analyzed_count, errors)
+        except RuntimeError as stock_exc:
+            # Handle Stockfish not found error specifically
+            if "Stockfish" in str(stock_exc):
+                stock_error = (
+                    "Stockfish engine not found.\n\n"
+                    "Batch analysis requires the Stockfish chess engine.\n\n"
+                    "To fix this:\n"
+                    "1. Download Stockfish: https://stockfishchess.org/download/\n"
+                    "2. Extract/install it to your system\n"
+                    "3. Go to Settings → Engine → Browse to specify the path\n\n"
+                    "See docs/INSTALL_STOCKFISH.md for detailed instructions."
+                )
+                self.finished.emit(0, [stock_error])
+            else:
+                self.finished.emit(analyzed_count, errors + [str(stock_exc)])
         except Exception as outer_exc:
             self.finished.emit(analyzed_count, errors + [str(outer_exc)])
         finally:
