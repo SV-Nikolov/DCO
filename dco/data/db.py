@@ -23,8 +23,8 @@ class Database:
             db_path: Path to SQLite database file. If None, uses default location.
         """
         if db_path is None:
-            # Default: dco_data.db in the current directory
-            db_path = os.path.join(os.getcwd(), "dco_data.db")
+            # Default: data/db/dco_data.db in the project directory
+            db_path = os.path.join(os.getcwd(), "data", "db", "dco_data.db")
         
         self.db_path = db_path
         self.engine = None
