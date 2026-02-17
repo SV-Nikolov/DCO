@@ -173,6 +173,9 @@ class MainWindow(QMainWindow):
         """Clean up resources when window is closed."""
         self._cleanup_all_resources()
         event.accept()
+        # Quit the application when the main window is closed
+        from PySide6.QtWidgets import QApplication
+        QApplication.quit()
     
     def _on_nav_click(self, index: int):
         """Handle navigation button click."""
