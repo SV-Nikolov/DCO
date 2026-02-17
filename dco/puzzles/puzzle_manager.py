@@ -51,17 +51,21 @@ class PuzzleManager:
 
             session.add(puzzle)
             session.commit()
-            session.refresh(puzzle)
+            puzzle_id = puzzle.id
 
             # Create progress tracking record
             progress = PuzzleProgress(
-                puzzle_id=puzzle.id,
+                puzzle_id=puzzle_id,
                 due_date=datetime.utcnow(),
             )
             session.add(progress)
             session.commit()
 
+            # Return puzzle data before closing session
             return puzzle
+        except Exception as e:
+            session.rollback()
+            raise e
         finally:
             session.close()
 
