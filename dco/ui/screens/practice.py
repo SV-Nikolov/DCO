@@ -433,7 +433,16 @@ class PracticeScreen(QWidget):
         """Start the engine if needed."""
         if self.engine:
             return
-        config = EngineConfig(depth=14, time_per_move=0.3)
+        
+        # Get Stockfish path from settings
+        from ...core.settings import get_settings
+        settings = get_settings()
+        
+        config = EngineConfig(
+            path=settings.get_engine_path(),
+            depth=14,
+            time_per_move=0.3
+        )
         self.engine = ChessEngine(config)
         self.engine.start()
 
