@@ -13,7 +13,7 @@ from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QSlider, QComboBox, QCheckBox, QSpinBox, QMessageBox,
-    QStackedWidget
+    QStackedWidget, QScrollArea
 )
 from PySide6.QtCore import Qt, Signal, QThread
 
@@ -569,12 +569,24 @@ class SetupMenuView(QWidget):
     def init_ui(self):
         """Initialize the setup menu UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(50, 50, 50, 50)
-        layout.setSpacing(30)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Create scroll area to prevent squashing
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        # Content widget
+        content_container = QWidget()
+        container_layout = QHBoxLayout(content_container)
+        container_layout.setContentsMargins(20, 40, 20, 40)
         
         # Center everything
         content = QWidget()
-        content.setMaximumWidth(600)
+        content.setMinimumWidth(500)
+        content.setMaximumWidth(700)
         content_layout = QVBoxLayout(content)
         content_layout.setSpacing(20)
         
@@ -626,7 +638,9 @@ class SetupMenuView(QWidget):
         # Divider
         divider1 = QFrame()
         divider1.setFrameShape(QFrame.HLine)
-        divider1.setStyleSheet("background-color: #e2e8f0;")
+        divider1.setFrameShadow(QFrame.Sunken)
+        divider1.setMinimumHeight(2)
+        divider1.setStyleSheet("background-color: #e2e8f0; margin: 10px 0px;")
         card_layout.addWidget(divider1)
         
         # Time Control
@@ -694,7 +708,9 @@ class SetupMenuView(QWidget):
         # Divider
         divider2 = QFrame()
         divider2.setFrameShape(QFrame.HLine)
-        divider2.setStyleSheet("background-color: #e2e8f0;")
+        divider2.setFrameShadow(QFrame.Sunken)
+        divider2.setMinimumHeight(2)
+        divider2.setStyleSheet("background-color: #e2e8f0; margin: 10px 0px;")
         card_layout.addWidget(divider2)
         
         # Color selection
@@ -716,7 +732,9 @@ class SetupMenuView(QWidget):
         # Divider
         divider3 = QFrame()
         divider3.setFrameShape(QFrame.HLine)
-        divider3.setStyleSheet("background-color: #e2e8f0;")
+        divider3.setFrameShadow(QFrame.Sunken)
+        divider3.setMinimumHeight(2)
+        divider3.setStyleSheet("background-color: #e2e8f0; margin: 10px 0px;")
         card_layout.addWidget(divider3)
         
         # Options
@@ -755,10 +773,13 @@ class SetupMenuView(QWidget):
         self.start_button.clicked.connect(self._on_start_clicked)
         content_layout.addWidget(self.start_button)
         
-        # Center the content
-        layout.addStretch()
-        layout.addWidget(content, alignment=Qt.AlignCenter)
-        layout.addStretch()
+        # Center the content horizontally
+        container_layout.addStretch()
+        container_layout.addWidget(content)
+        container_layout.addStretch()
+        
+        scroll.setWidget(content_container)
+        layout.addWidget(scroll)
     
     def _on_elo_changed(self, value: int):
         """Handle Elo slider change."""

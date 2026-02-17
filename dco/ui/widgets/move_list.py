@@ -273,3 +273,48 @@ class MoveListWidget(QWidget):
             if item:
                 self.table.setCurrentItem(item)
                 self.table.scrollToItem(item)
+    
+    def clear(self):
+        """Clear all moves from the list."""
+        self.moves_data = []
+        self.table.setRowCount(0)
+    
+    def add_move(self, san: str, is_black: bool = False):
+        """
+        Add a move to the list (for live games).
+        
+        Args:
+            san: The move in SAN notation
+            is_black: Whether this is a black move
+        """
+        # Create a simple Move object without full data
+        # This is for live game display, not analysis
+        move_num = len(self.moves_data) + 1
+        
+        # Create minimal move data
+        from ...data.models import Move as MoveModel
+        move = MoveModel()
+        move.move_number = (move_num + 1) // 2
+        move.san = san
+        move.classification = None
+        move.eval_before = None
+        move.eval_after = None
+        
+        self.moves_data.append(move)
+        self._update_table()
+        
+        # Scroll to the bottom
+        self.table.scrollToBottom()
+    
+    def remove_last_moves(self, count: int = 1):
+        """
+        Remove the last N moves from the list.
+        
+        Args:
+            count: Number of moves to remove
+        """
+        if count >= len(self.moves_data):
+            self.clear()
+        else:
+            self.moves_data = self.moves_data[:-count]
+            self._update_table()
