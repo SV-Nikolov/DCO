@@ -6,6 +6,7 @@ Displays backend analytics using an HTML/CSS layout.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from string import Template
 from typing import Dict, Optional, Tuple
 
 from PySide6.QtCore import QDate
@@ -294,26 +295,6 @@ class StatisticsScreen(QWidget):
             "</svg>"
         )
 
-    def _build_color_bias_svg(self, color_stats: Dict[str, Dict[str, float]]) -> str:
-        white_acpl = self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"]))
-        black_acpl = self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"]))
-        max_val = max(white_acpl, black_acpl, 1.0)
-        white_height = int(70 * (white_acpl / max_val))
-        black_height = int(70 * (black_acpl / max_val))
-
-        return (
-            "<svg viewBox='0 0 200 110' class='chart-svg'>"
-            "<rect x='0' y='0' width='200' height='110' rx='12' fill='#0b1220'/>"
-            "<text x='14' y='20' class='svg-title'>ACPL by Color</text>"
-            f"<rect x='50' y='{90 - white_height}' width='30' height='{white_height}' rx='6' fill='#38bdf8'></rect>"
-            f"<rect x='120' y='{90 - black_height}' width='30' height='{black_height}' rx='6' fill='#f97316'></rect>"
-            "<text x='65' y='102' text-anchor='middle' class='svg-label'>White</text>"
-            "<text x='135' y='102' text-anchor='middle' class='svg-label'>Black</text>"
-            f"<text x='65' y='{90 - white_height - 6}' text-anchor='middle' class='svg-value'>{white_acpl:.1f}</text>"
-            f"<text x='135' y='{90 - black_height - 6}' text-anchor='middle' class='svg-value'>{black_acpl:.1f}</text>"
-            "</svg>"
-        )
-
     def _build_cpl_svg(self, cpl_buckets: Dict[str, int]) -> str:
         total = max(1, int(cpl_buckets.get("total", 0)))
         buckets = [
@@ -418,6 +399,26 @@ class StatisticsScreen(QWidget):
             "</svg>"
         )
 
+    def _build_color_bias_svg(self, color_stats: Dict[str, Dict[str, float]]) -> str:
+        white_acpl = self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"]))
+        black_acpl = self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"]))
+        max_val = max(white_acpl, black_acpl, 1.0)
+        white_height = int(70 * (white_acpl / max_val))
+        black_height = int(70 * (black_acpl / max_val))
+
+        return (
+            "<svg viewBox='0 0 200 110' class='chart-svg'>"
+            "<rect x='0' y='0' width='200' height='110' rx='12' fill='#0b1220'/>"
+            "<text x='14' y='20' class='svg-title'>ACPL by Color</text>"
+            f"<rect x='50' y='{90 - white_height}' width='30' height='{white_height}' rx='6' fill='#38bdf8'></rect>"
+            f"<rect x='120' y='{90 - black_height}' width='30' height='{black_height}' rx='6' fill='#f97316'></rect>"
+            "<text x='65' y='102' text-anchor='middle' class='svg-label'>White</text>"
+            "<text x='135' y='102' text-anchor='middle' class='svg-label'>Black</text>"
+            f"<text x='65' y='{90 - white_height - 6}' text-anchor='middle' class='svg-value'>{white_acpl:.1f}</text>"
+            f"<text x='135' y='{90 - black_height - 6}' text-anchor='middle' class='svg-value'>{black_acpl:.1f}</text>"
+            "</svg>"
+        )
+
     def _build_empty_state(self) -> str:
         return (
             "<html><body style='font-family: Trebuchet MS, Verdana, sans-serif; color: #1f2937;'>"
@@ -469,266 +470,313 @@ class StatisticsScreen(QWidget):
         acpl_svg = self._build_sparkline(acpl_series[-24:], "ACPL", "#38bdf8")
         color_bias_svg = self._build_color_bias_svg(color_stats)
 
-        html = f"""
-        <html>
-        <head>
-            <style>
-                :root {{
-                    --ink: #0f172a;
-                    --muted: #64748b;
-                    --card: #ffffff;
-                    --line: #e2e8f0;
-                    --accent: #38bdf8;
-                    --deep: #0b1220;
-                    --glow: rgba(14, 165, 233, 0.15);
-                }}
-                body {{
-                    font-family: Trebuchet MS, Verdana, sans-serif;
-                    background: radial-gradient(circle at top left, #e2e8f0 0%, #f8fafc 42%, #f1f5f9 100%);
-                    color: var(--ink);
-                }}
-                .wrap {{
-                    padding: 12px 8px 24px 8px;
-                }}
-                .hero {{
-                    background: linear-gradient(135deg, #0b1220 0%, #1f2937 100%);
-                    color: #f8fafc;
-                    border-radius: 16px;
-                    padding: 20px 22px;
-                    margin-bottom: 18px;
-                    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
-                }}
-                .hero h2 {{
-                    margin: 0 0 6px 0;
-                    font-size: 22px;
-                }}
-                .hero p {{
-                    margin: 0;
-                    color: #cbd5f5;
-                }}
-                .grid {{
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 14px;
-                }}
-                .card {{
-                    background: var(--card);
-                    border-radius: 14px;
-                    padding: 14px 16px;
-                    border: 1px solid var(--line);
-                    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
-                }}
-                .card h3 {{
-                    margin: 0 0 6px 0;
-                    font-size: 14px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.08em;
-                    color: var(--muted);
-                }}
-                .big {{
-                    font-size: 26px;
-                    font-weight: 700;
-                    margin: 0;
-                }}
-                .subtle {{
-                    color: var(--muted);
-                    font-size: 12px;
-                }}
-                .row {{
-                    display: flex;
-                    justify-content: space-between;
-                    margin: 6px 0;
-                    font-size: 13px;
-                }}
-                .bar {{
-                    height: 8px;
-                    background: var(--line);
-                    border-radius: 8px;
-                    overflow: hidden;
-                }}
-                .bar > span {{
-                    display: block;
-                    height: 100%;
-                    background: var(--accent);
-                }}
-                .tag {{
-                    display: inline-block;
-                    padding: 2px 8px;
-                    border-radius: 999px;
-                    font-size: 11px;
-                    background: var(--line);
-                    color: var(--ink);
-                    margin-left: 6px;
-                }}
-                .section-title {{
-                    margin: 18px 0 8px 0;
-                    font-size: 15px;
-                    color: var(--ink);
-                }}
-                .split {{
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 12px;
-                }}
-                .chart-row {{
-                    display: grid;
-                    grid-template-columns: 2fr 1fr;
-                    gap: 14px;
-                    margin-bottom: 14px;
-                }}
-                .spark-row {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 12px;
-                    margin-bottom: 12px;
-                }
-                .chart-card {{
-                    background: var(--card);
-                    border-radius: 16px;
-                    padding: 12px;
-                    border: 1px solid var(--line);
-                    box-shadow: 0 12px 30px var(--glow);
-                }}
-                .chart-svg {{
-                    width: 100%;
-                    height: auto;
-                }}
-                .spark-svg {
-                    width: 100%;
-                    height: auto;
-                }
-                .svg-title {{
-                    font-size: 12px;
-                    fill: #94a3b8;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                }}
-                .svg-label {{
-                    font-size: 10px;
-                    fill: #cbd5f5;
-                }}
-                .svg-value {{
-                    font-size: 10px;
-                    fill: #e2e8f0;
-                }}
-                .svg-legend {{
-                    font-size: 9px;
-                    fill: #64748b;
-                }}
-                .gauge-svg {{
-                    width: 100%;
-                    height: auto;
-                }}
-                .gauge-value {{
-                    font-size: 18px;
-                    fill: #f8fafc;
-                    font-weight: 700;
-                }}
-                .gauge-label {{
-                    font-size: 10px;
-                    fill: #94a3b8;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="wrap">
-                <div class="hero">
-                    <h2>DCO Analytics Overview</h2>
-                    <p>Backend metrics for training, performance, and reliability.</p>
-                </div>
-
-                <div class="grid">
-                    <div class="card">
-                        <h3>Games Analyzed</h3>
-                        <p class="big">{total_games}</p>
-                        <p class="subtle">Range filter applied</p>
-                    </div>
-                    <div class="card">
-                        <h3>Average ACPL</h3>
-                        <p class="big">{fmt(acpl_overall, 1)}</p>
-                        <p class="subtle">Lower is better</p>
-                    </div>
-                    <div class="card">
-                        <h3>Average Accuracy</h3>
-                        <p class="big">{fmt(avg_accuracy, 1)}%</p>
-                        <p class="subtle">From analysis results</p>
-                    </div>
-                    <div class="card">
-                        <h3>Estimated Elo</h3>
-                        <p class="big">{fmt(avg_elo, 0)}</p>
-                        <p class="subtle">Aggregate performance</p>
-                    </div>
-                </div>
-
-                <h4 class="section-title">Performance Visuals</h4>
-                <div class="spark-row">
-                    <div class="chart-card">{accuracy_svg}</div>
-                    <div class="chart-card">{elo_svg}</div>
-                    <div class="chart-card">{acpl_svg}</div>
-                </div>
-                <div class="chart-row">
-                    <div class="chart-card">{phase_svg}</div>
-                    <div class="chart-card">{critical_svg}</div>
-                </div>
-                <div class="chart-card">{cpl_svg}</div>
-
-                <h4 class="section-title">Error Diagnostics by Phase</h4>
-                <div class="grid">
-                    <div class="card">
-                        <h3>Opening</h3>
-                        <p class="big">{fmt(phase_cpl("opening"), 1)} ACPL</p>
-                        <div class="row"><span>Blunders/game</span><span>{fmt(per_game_phase("opening", "blunders"), 2)}</span></div>
-                        <div class="row"><span>Mistakes/game</span><span>{fmt(per_game_phase("opening", "mistakes"), 2)}</span></div>
-                        <div class="row"><span>Inaccuracies/game</span><span>{fmt(per_game_phase("opening", "inaccuracies"), 2)}</span></div>
-                        <p class="subtle">Games with opening: {phase_games["opening"]}</p>
-                    </div>
-                    <div class="card">
-                        <h3>Middlegame</h3>
-                        <p class="big">{fmt(phase_cpl("middlegame"), 1)} ACPL</p>
-                        <div class="row"><span>Blunders/game</span><span>{fmt(per_game_phase("middlegame", "blunders"), 2)}</span></div>
-                        <div class="row"><span>Mistakes/game</span><span>{fmt(per_game_phase("middlegame", "mistakes"), 2)}</span></div>
-                        <div class="row"><span>Inaccuracies/game</span><span>{fmt(per_game_phase("middlegame", "inaccuracies"), 2)}</span></div>
-                        <p class="subtle">Games with middlegame: {phase_games["middlegame"]}</p>
-                    </div>
-                    <div class="card">
-                        <h3>Endgame</h3>
-                        <p class="big">{fmt(phase_cpl("endgame"), 1)} ACPL</p>
-                        <div class="row"><span>Blunders/game</span><span>{fmt(per_game_phase("endgame", "blunders"), 2)}</span></div>
-                        <div class="row"><span>Mistakes/game</span><span>{fmt(per_game_phase("endgame", "mistakes"), 2)}</span></div>
-                        <div class="row"><span>Inaccuracies/game</span><span>{fmt(per_game_phase("endgame", "inaccuracies"), 2)}</span></div>
-                        <p class="subtle">Games with endgame: {phase_games["endgame"]}</p>
-                    </div>
-                    <div class="card">
-                        <h3>Critical Positions</h3>
-                        <p class="big">{pct(critical_solved, critical_faced)}%</p>
-                        <div class="row"><span>Faced</span><span>{critical_faced}</span></div>
-                        <div class="row"><span>Solved</span><span>{critical_solved}</span></div>
-                        <div class="row"><span>Failed</span><span>{critical_failed}</span></div>
-                        <p class="subtle">ACPL in critical: {fmt(acpl_critical, 1)}</p>
-                    </div>
-                </div>
-
-                <h4 class="section-title">Color Bias</h4>
-                <div class="chart-card">{color_bias_svg}</div>
-                <div class="split">
-                    <div class="card">
-                        <h3>White</h3>
-                        <p class="big">{fmt(self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"])), 1)} ACPL</p>
-                        <div class="row"><span>Blunders</span><span>{int(color_stats["white"]["blunders"])}</span></div>
-                        <div class="row"><span>Mistakes</span><span>{int(color_stats["white"]["mistakes"])}</span></div>
-                        <div class="row"><span>Inaccuracies</span><span>{int(color_stats["white"]["inaccuracies"])}</span></div>
-                    </div>
-                    <div class="card">
-                        <h3>Black</h3>
-                        <p class="big">{fmt(self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"])), 1)} ACPL</p>
-                        <div class="row"><span>Blunders</span><span>{int(color_stats["black"]["blunders"])}</span></div>
-                        <div class="row"><span>Mistakes</span><span>{int(color_stats["black"]["mistakes"])}</span></div>
-                        <div class="row"><span>Inaccuracies</span><span>{int(color_stats["black"]["inaccuracies"])}</span></div>
-                    </div>
-                </div>
-            </div>
-        </body>
-        </html>
+        css = """
+            :root {
+                --ink: #0f172a;
+                --muted: #64748b;
+                --card: #ffffff;
+                --line: #e2e8f0;
+                --accent: #38bdf8;
+                --deep: #0b1220;
+                --glow: rgba(14, 165, 233, 0.15);
+            }
+            body {
+                font-family: Trebuchet MS, Verdana, sans-serif;
+                background: radial-gradient(circle at top left, #e2e8f0 0%, #f8fafc 42%, #f1f5f9 100%);
+                color: var(--ink);
+            }
+            .wrap {
+                padding: 12px 8px 24px 8px;
+            }
+            .hero {
+                background: linear-gradient(135deg, #0b1220 0%, #1f2937 100%);
+                color: #f8fafc;
+                border-radius: 16px;
+                padding: 20px 22px;
+                margin-bottom: 18px;
+                box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+            }
+            .hero h2 {
+                margin: 0 0 6px 0;
+                font-size: 22px;
+            }
+            .hero p {
+                margin: 0;
+                color: #cbd5f5;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+            .card {
+                background: var(--card);
+                border-radius: 14px;
+                padding: 14px 16px;
+                border: 1px solid var(--line);
+                box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+            }
+            .card h3 {
+                margin: 0 0 6px 0;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: var(--muted);
+            }
+            .big {
+                font-size: 26px;
+                font-weight: 700;
+                margin: 0;
+            }
+            .subtle {
+                color: var(--muted);
+                font-size: 12px;
+            }
+            .row {
+                display: flex;
+                justify-content: space-between;
+                margin: 6px 0;
+                font-size: 13px;
+            }
+            .bar {
+                height: 8px;
+                background: var(--line);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .bar > span {
+                display: block;
+                height: 100%;
+                background: var(--accent);
+            }
+            .tag {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 11px;
+                background: var(--line);
+                color: var(--ink);
+                margin-left: 6px;
+            }
+            .section-title {
+                margin: 18px 0 8px 0;
+                font-size: 15px;
+                color: var(--ink);
+            }
+            .split {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .chart-row {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 14px;
+                margin-bottom: 14px;
+            }
+            .spark-row {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                margin-bottom: 12px;
+            }
+            .chart-card {
+                background: var(--card);
+                border-radius: 16px;
+                padding: 12px;
+                border: 1px solid var(--line);
+                box-shadow: 0 12px 30px var(--glow);
+            }
+            .chart-svg {
+                width: 100%;
+                height: auto;
+            }
+            .spark-svg {
+                width: 100%;
+                height: auto;
+            }
+            .svg-title {
+                font-size: 12px;
+                fill: #94a3b8;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+            }
+            .svg-label {
+                font-size: 10px;
+                fill: #cbd5f5;
+            }
+            .svg-value {
+                font-size: 10px;
+                fill: #e2e8f0;
+            }
+            .svg-legend {
+                font-size: 9px;
+                fill: #64748b;
+            }
+            .gauge-svg {
+                width: 100%;
+                height: auto;
+            }
+            .gauge-value {
+                font-size: 18px;
+                fill: #f8fafc;
+                font-weight: 700;
+            }
+            .gauge-label {
+                font-size: 10px;
+                fill: #94a3b8;
+            }
         """
 
-        return html
+        html_template = Template(
+            """
+            <html>
+            <head>
+                <style>$css</style>
+            </head>
+            <body>
+                <div class="wrap">
+                    <div class="hero">
+                        <h2>DCO Analytics Overview</h2>
+                        <p>Backend metrics for training, performance, and reliability.</p>
+                    </div>
+
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Games Analyzed</h3>
+                            <p class="big">$total_games</p>
+                            <p class="subtle">Range filter applied</p>
+                        </div>
+                        <div class="card">
+                            <h3>Average ACPL</h3>
+                            <p class="big">$acpl_overall</p>
+                            <p class="subtle">Lower is better</p>
+                        </div>
+                        <div class="card">
+                            <h3>Average Accuracy</h3>
+                            <p class="big">$avg_accuracy</p>
+                            <p class="subtle">From analysis results</p>
+                        </div>
+                        <div class="card">
+                            <h3>Estimated Elo</h3>
+                            <p class="big">$avg_elo</p>
+                            <p class="subtle">Aggregate performance</p>
+                        </div>
+                    </div>
+
+                    <h4 class="section-title">Performance Visuals</h4>
+                    <div class="spark-row">
+                        <div class="chart-card">$accuracy_svg</div>
+                        <div class="chart-card">$elo_svg</div>
+                        <div class="chart-card">$acpl_svg</div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="chart-card">$phase_svg</div>
+                        <div class="chart-card">$critical_svg</div>
+                    </div>
+                    <div class="chart-card">$cpl_svg</div>
+
+                    <h4 class="section-title">Error Diagnostics by Phase</h4>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Opening</h3>
+                            <p class="big">$opening_acpl ACPL</p>
+                            <div class="row"><span>Blunders/game</span><span>$opening_blunders</span></div>
+                            <div class="row"><span>Mistakes/game</span><span>$opening_mistakes</span></div>
+                            <div class="row"><span>Inaccuracies/game</span><span>$opening_inaccuracies</span></div>
+                            <p class="subtle">Games with opening: $opening_games</p>
+                        </div>
+                        <div class="card">
+                            <h3>Middlegame</h3>
+                            <p class="big">$middlegame_acpl ACPL</p>
+                            <div class="row"><span>Blunders/game</span><span>$middlegame_blunders</span></div>
+                            <div class="row"><span>Mistakes/game</span><span>$middlegame_mistakes</span></div>
+                            <div class="row"><span>Inaccuracies/game</span><span>$middlegame_inaccuracies</span></div>
+                            <p class="subtle">Games with middlegame: $middlegame_games</p>
+                        </div>
+                        <div class="card">
+                            <h3>Endgame</h3>
+                            <p class="big">$endgame_acpl ACPL</p>
+                            <div class="row"><span>Blunders/game</span><span>$endgame_blunders</span></div>
+                            <div class="row"><span>Mistakes/game</span><span>$endgame_mistakes</span></div>
+                            <div class="row"><span>Inaccuracies/game</span><span>$endgame_inaccuracies</span></div>
+                            <p class="subtle">Games with endgame: $endgame_games</p>
+                        </div>
+                        <div class="card">
+                            <h3>Critical Positions</h3>
+                            <p class="big">$critical_rate%</p>
+                            <div class="row"><span>Faced</span><span>$critical_faced</span></div>
+                            <div class="row"><span>Solved</span><span>$critical_solved</span></div>
+                            <div class="row"><span>Failed</span><span>$critical_failed</span></div>
+                            <p class="subtle">ACPL in critical: $acpl_critical</p>
+                        </div>
+                    </div>
+
+                    <h4 class="section-title">Color Bias</h4>
+                    <div class="chart-card">$color_bias_svg</div>
+                    <div class="split">
+                        <div class="card">
+                            <h3>White</h3>
+                            <p class="big">$white_acpl ACPL</p>
+                            <div class="row"><span>Blunders</span><span>$white_blunders</span></div>
+                            <div class="row"><span>Mistakes</span><span>$white_mistakes</span></div>
+                            <div class="row"><span>Inaccuracies</span><span>$white_inaccuracies</span></div>
+                        </div>
+                        <div class="card">
+                            <h3>Black</h3>
+                            <p class="big">$black_acpl ACPL</p>
+                            <div class="row"><span>Blunders</span><span>$black_blunders</span></div>
+                            <div class="row"><span>Mistakes</span><span>$black_mistakes</span></div>
+                            <div class="row"><span>Inaccuracies</span><span>$black_inaccuracies</span></div>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        )
+
+        values = {
+            "css": css,
+            "total_games": str(total_games),
+            "acpl_overall": fmt(acpl_overall, 1),
+            "avg_accuracy": f"{fmt(avg_accuracy, 1)}%",
+            "avg_elo": fmt(avg_elo, 0),
+            "accuracy_svg": accuracy_svg,
+            "elo_svg": elo_svg,
+            "acpl_svg": acpl_svg,
+            "phase_svg": phase_svg,
+            "critical_svg": critical_svg,
+            "cpl_svg": cpl_svg,
+            "opening_acpl": fmt(phase_cpl("opening"), 1),
+            "opening_blunders": fmt(per_game_phase("opening", "blunders"), 2),
+            "opening_mistakes": fmt(per_game_phase("opening", "mistakes"), 2),
+            "opening_inaccuracies": fmt(per_game_phase("opening", "inaccuracies"), 2),
+            "opening_games": str(phase_games["opening"]),
+            "middlegame_acpl": fmt(phase_cpl("middlegame"), 1),
+            "middlegame_blunders": fmt(per_game_phase("middlegame", "blunders"), 2),
+            "middlegame_mistakes": fmt(per_game_phase("middlegame", "mistakes"), 2),
+            "middlegame_inaccuracies": fmt(per_game_phase("middlegame", "inaccuracies"), 2),
+            "middlegame_games": str(phase_games["middlegame"]),
+            "endgame_acpl": fmt(phase_cpl("endgame"), 1),
+            "endgame_blunders": fmt(per_game_phase("endgame", "blunders"), 2),
+            "endgame_mistakes": fmt(per_game_phase("endgame", "mistakes"), 2),
+            "endgame_inaccuracies": fmt(per_game_phase("endgame", "inaccuracies"), 2),
+            "endgame_games": str(phase_games["endgame"]),
+            "critical_rate": pct(critical_solved, critical_faced),
+            "critical_faced": str(critical_faced),
+            "critical_solved": str(critical_solved),
+            "critical_failed": str(critical_failed),
+            "acpl_critical": fmt(acpl_critical, 1),
+            "color_bias_svg": color_bias_svg,
+            "white_acpl": fmt(self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"])), 1),
+            "white_blunders": str(int(color_stats["white"]["blunders"])),
+            "white_mistakes": str(int(color_stats["white"]["mistakes"])),
+            "white_inaccuracies": str(int(color_stats["white"]["inaccuracies"])),
+            "black_acpl": fmt(self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"])), 1),
+            "black_blunders": str(int(color_stats["black"]["blunders"])),
+            "black_mistakes": str(int(color_stats["black"]["mistakes"])),
+            "black_inaccuracies": str(int(color_stats["black"]["inaccuracies"])),
+        }
+
+        return html_template.substitute(values)
