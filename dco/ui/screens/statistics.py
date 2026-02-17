@@ -12,8 +12,9 @@ from typing import Dict, Optional, Tuple
 from PySide6.QtCore import QDate
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QDateEdit, QFrame, QTextBrowser
+    QPushButton, QDateEdit, QFrame
 )
+from PySide6.QtWebEngineWidgets import QWebEngineView
 
 from ...data.db import Database
 from ...data.models import Game, Analysis, GameAnalytics
@@ -82,8 +83,7 @@ class StatisticsScreen(QWidget):
         controls_layout.addStretch()
         layout.addWidget(controls)
 
-        self.html_view = QTextBrowser()
-        self.html_view.setOpenExternalLinks(True)
+        self.html_view = QWebEngineView()
         self.html_view.setStyleSheet("border: none; background: transparent;")
         layout.addWidget(self.html_view, 1)
 

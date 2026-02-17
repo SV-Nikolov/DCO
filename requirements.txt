@@ -8,6 +8,7 @@ python-chess==1.999
 PySide6>=6.8.0
 PySide6-Addons>=6.8.0
 PySide6-Essentials>=6.8.0
+PySide6-QtWebEngine>=6.8.0
 
 # --- Database / ORM ---
 SQLAlchemy==2.0.36

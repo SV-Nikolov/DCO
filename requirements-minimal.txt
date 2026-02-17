@@ -7,6 +7,9 @@ python-chess==1.999
 # --- REQUIRED: Desktop UI (Qt) ---
 PySide6>=6.8.0
 
+# --- OPTIONAL: HTML/SVG stats dashboard ---
+# PySide6-QtWebEngine>=6.8.0
+
 # --- REQUIRED: Database / ORM ---
 SQLAlchemy==2.0.36
 
