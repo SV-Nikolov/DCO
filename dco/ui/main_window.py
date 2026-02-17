@@ -18,6 +18,7 @@ from .screens.practice import PracticeScreen
 from .screens.play import PlayScreen
 from .screens.puzzles import PuzzleScreen
 from .screens.statistics import StatisticsScreen
+from .screens.settings import SettingsScreen
 from ..data.db import get_db
 
 
@@ -154,6 +155,10 @@ class MainWindow(QMainWindow):
         # Statistics screen
         self.statistics_screen = StatisticsScreen(self.db)
         self.content_stack.addWidget(self.statistics_screen)
+        
+        # Settings screen
+        self.settings_screen = SettingsScreen(self.db)
+        self.content_stack.addWidget(self.settings_screen)
     
     def _cleanup_all_resources(self):
         """Clean up all resources (called on app quit)."""
@@ -173,12 +178,6 @@ class MainWindow(QMainWindow):
         """Clean up resources when window is closed."""
         self._cleanup_all_resources()
         event.accept()
-        
-        # Settings screen (placeholder)
-        settings_placeholder = QLabel("Settings - Coming Soon")
-        settings_placeholder.setAlignment(Qt.AlignCenter)
-        settings_placeholder.setStyleSheet("font-size: 18px; color: #6b7280;")
-        self.content_stack.addWidget(settings_placeholder)
     
     def _on_nav_click(self, index: int):
         """Handle navigation button click."""

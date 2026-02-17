@@ -22,6 +22,22 @@ class EngineConfig:
     depth: Optional[int] = 20
     time_per_move: Optional[float] = None  # seconds
     multipv: int = 3  # Number of principal variations
+    
+    @classmethod
+    def from_settings(cls, settings=None):
+        """Create EngineConfig from AppSettings."""
+        if settings is None:
+            from .settings import get_settings
+            settings = get_settings()
+        
+        return cls(
+            path=settings.get_engine_path(),
+            threads=settings.get_engine_threads(),
+            hash_mb=settings.get_engine_hash(),
+            depth=settings.get_engine_depth(),
+            time_per_move=settings.get_engine_time(),
+            multipv=3
+        )
 
 
 @dataclass

@@ -5,5 +5,6 @@ from .play import PlayScreen
 from .practice import PracticeScreen
 from .puzzles import PuzzleScreen
 from .statistics import StatisticsScreen
+from .settings import SettingsScreen
 
-__all__ = ["HomeScreen", "LibraryScreen", "PlayScreen", "PracticeScreen", "PuzzleScreen", "StatisticsScreen"]
+__all__ = ["HomeScreen", "LibraryScreen", "PlayScreen", "PracticeScreen", "PuzzleScreen", "StatisticsScreen", "SettingsScreen"]
