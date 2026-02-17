@@ -145,6 +145,7 @@ class StatisticsScreen(QWidget):
             elos = []
             acpl_overall_sum = 0.0
             acpl_overall_count = 0
+            acpl_series = []
 
             phase_totals = self._init_phase_totals()
             phase_games = {"opening": 0, "middlegame": 0, "endgame": 0}
@@ -174,6 +175,7 @@ class StatisticsScreen(QWidget):
                 if analytics.acpl_overall is not None:
                     acpl_overall_sum += analytics.acpl_overall
                     acpl_overall_count += 1
+                    acpl_series.append(analytics.acpl_overall)
 
                 phase_counts = analytics.phase_error_counts or {}
                 for phase_key in ("opening", "middlegame", "endgame"):
@@ -212,6 +214,9 @@ class StatisticsScreen(QWidget):
                 avg_accuracy=self._avg_list(accuracies),
                 avg_elo=self._avg_list(elos),
                 acpl_overall=self._avg_safe(acpl_overall_sum, acpl_overall_count),
+                accuracy_series=accuracies,
+                elo_series=elos,
+                acpl_series=acpl_series,
                 phase_totals=phase_totals,
                 phase_games=phase_games,
                 cpl_buckets=cpl_buckets,
@@ -254,6 +259,60 @@ class StatisticsScreen(QWidget):
 
     def _per_game(self, total: int, games: int) -> float:
         return total / games if games else 0.0
+
+    def _build_sparkline(self, values, title: str, color: str) -> str:
+        if not values:
+            return (
+                "<svg viewBox='0 0 180 60' class='spark-svg'>"
+                "<rect x='0' y='0' width='180' height='60' rx='10' fill='#0b1220'/>"
+                f"<text x='10' y='20' class='svg-title'>{title}</text>"
+                "<text x='10' y='40' class='svg-label'>No data</text>"
+                "</svg>"
+            )
+
+        max_val = max(values)
+        min_val = min(values)
+        span = max(max_val - min_val, 1e-6)
+        points = []
+        count = len(values)
+        for idx, val in enumerate(values):
+            x = 10 + (idx / max(1, count - 1)) * 160
+            y = 45 - ((val - min_val) / span) * 28
+            points.append(f"{x:.1f},{y:.1f}")
+        polyline = " ".join(points)
+
+        return (
+            "<svg viewBox='0 0 180 60' class='spark-svg'>"
+            "<defs><linearGradient id='spark' x1='0' x2='1' y1='0' y2='0'>"
+            f"<stop offset='0%' stop-color='{color}' stop-opacity='0.2'/>"
+            f"<stop offset='100%' stop-color='{color}' stop-opacity='0.6'/>"
+            "</linearGradient></defs>"
+            "<rect x='0' y='0' width='180' height='60' rx='10' fill='#0b1220'/>"
+            f"<text x='10' y='18' class='svg-title'>{title}</text>"
+            f"<polyline fill='none' stroke='{color}' stroke-width='2' points='{polyline}'/>"
+            f"<polyline fill='url(#spark)' opacity='0.35' points='10,50 {polyline} 170,50'/>"
+            "</svg>"
+        )
+
+    def _build_color_bias_svg(self, color_stats: Dict[str, Dict[str, float]]) -> str:
+        white_acpl = self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"]))
+        black_acpl = self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"]))
+        max_val = max(white_acpl, black_acpl, 1.0)
+        white_height = int(70 * (white_acpl / max_val))
+        black_height = int(70 * (black_acpl / max_val))
+
+        return (
+            "<svg viewBox='0 0 200 110' class='chart-svg'>"
+            "<rect x='0' y='0' width='200' height='110' rx='12' fill='#0b1220'/>"
+            "<text x='14' y='20' class='svg-title'>ACPL by Color</text>"
+            f"<rect x='50' y='{90 - white_height}' width='30' height='{white_height}' rx='6' fill='#38bdf8'></rect>"
+            f"<rect x='120' y='{90 - black_height}' width='30' height='{black_height}' rx='6' fill='#f97316'></rect>"
+            "<text x='65' y='102' text-anchor='middle' class='svg-label'>White</text>"
+            "<text x='135' y='102' text-anchor='middle' class='svg-label'>Black</text>"
+            f"<text x='65' y='{90 - white_height - 6}' text-anchor='middle' class='svg-value'>{white_acpl:.1f}</text>"
+            f"<text x='135' y='{90 - black_height - 6}' text-anchor='middle' class='svg-value'>{black_acpl:.1f}</text>"
+            "</svg>"
+        )
 
     def _build_cpl_svg(self, cpl_buckets: Dict[str, int]) -> str:
         total = max(1, int(cpl_buckets.get("total", 0)))
@@ -374,6 +433,9 @@ class StatisticsScreen(QWidget):
         avg_accuracy: float,
         avg_elo: float,
         acpl_overall: float,
+        accuracy_series,
+        elo_series,
+        acpl_series,
         phase_totals: Dict[str, Dict[str, float]],
         phase_games: Dict[str, int],
         cpl_buckets: Dict[str, int],
@@ -402,6 +464,10 @@ class StatisticsScreen(QWidget):
         cpl_svg = self._build_cpl_svg(cpl_buckets)
         phase_svg = self._build_phase_svg(phase_totals, phase_games)
         critical_svg = self._build_critical_gauge(critical_solved, critical_faced)
+        accuracy_svg = self._build_sparkline(accuracy_series[-24:], "Accuracy", "#22c55e")
+        elo_svg = self._build_sparkline(elo_series[-24:], "Elo", "#f97316")
+        acpl_svg = self._build_sparkline(acpl_series[-24:], "ACPL", "#38bdf8")
+        color_bias_svg = self._build_color_bias_svg(color_stats)
 
         html = f"""
         <html>
@@ -510,6 +576,12 @@ class StatisticsScreen(QWidget):
                     gap: 14px;
                     margin-bottom: 14px;
                 }}
+                .spark-row {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
                 .chart-card {{
                     background: var(--card);
                     border-radius: 16px;
@@ -521,6 +593,10 @@ class StatisticsScreen(QWidget):
                     width: 100%;
                     height: auto;
                 }}
+                .spark-svg {
+                    width: 100%;
+                    height: auto;
+                }
                 .svg-title {{
                     font-size: 12px;
                     fill: #94a3b8;
@@ -585,6 +661,11 @@ class StatisticsScreen(QWidget):
                 </div>
 
                 <h4 class="section-title">Performance Visuals</h4>
+                <div class="spark-row">
+                    <div class="chart-card">{accuracy_svg}</div>
+                    <div class="chart-card">{elo_svg}</div>
+                    <div class="chart-card">{acpl_svg}</div>
+                </div>
                 <div class="chart-row">
                     <div class="chart-card">{phase_svg}</div>
                     <div class="chart-card">{critical_svg}</div>
@@ -628,6 +709,7 @@ class StatisticsScreen(QWidget):
                 </div>
 
                 <h4 class="section-title">Color Bias</h4>
+                <div class="chart-card">{color_bias_svg}</div>
                 <div class="split">
                     <div class="card">
                         <h3>White</h3>
