@@ -13,6 +13,7 @@ from PySide6.QtCore import Qt
 from dco.ui.main_window import MainWindow
 from dco.ui.modern_stylesheet import load_stylesheet
 from dco.data.db import init_database
+from dco.core.settings import get_settings
 
 
 def main():
@@ -22,8 +23,10 @@ def main():
     app.setApplicationName("Daily Chess Offline")
     app.setOrganizationName("DCO")
     
-    # Apply modern stylesheet
-    app.setStyleSheet(load_stylesheet())
+    # Load theme from settings and apply stylesheet
+    settings = get_settings()
+    theme = settings.get_theme()
+    app.setStyleSheet(load_stylesheet(theme))
     
     # Initialize database
     try:

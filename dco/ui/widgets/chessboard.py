@@ -36,6 +36,13 @@ class ChessboardWidget(QWidget):
         self.setMinimumSize(size, size)
         self.setMaximumSize(size, size)
         
+        # Load board colors from settings
+        from ...core.settings import get_settings
+        settings = get_settings()
+        self.light_square_color = settings.get_board_light_color()
+        self.dark_square_color = settings.get_board_dark_color()
+        self.show_coordinates = settings.get_show_coordinates()
+        
         # SVG renderer
         self.svg_renderer = QSvgRenderer()
         
@@ -112,6 +119,15 @@ class ChessboardWidget(QWidget):
         self.last_move = move
         self.update_board()
     
+    def reload_settings(self):
+        """Reload board colors and coordinates from settings."""
+        from ...core.settings import get_settings
+        settings = get_settings()
+        self.light_square_color = settings.get_board_light_color()
+        self.dark_square_color = settings.get_board_dark_color()
+        self.show_coordinates = settings.get_show_coordinates()
+        self.update_board()
+    
     def update_board(self):
         """Update the board display."""
         # Generate SVG
@@ -145,6 +161,12 @@ class ChessboardWidget(QWidget):
         for from_sq, to_sq, color in self.arrows:
             arrows_list.append(chess.svg.Arrow(from_sq, to_sq, color=color))
         
+        # Custom board colors
+        colors = {
+            'square light': self.light_square_color,
+            'square dark': self.dark_square_color
+        }
+        
         # Generate SVG
         svg = chess.svg.board(
             self.board,
@@ -152,7 +174,8 @@ class ChessboardWidget(QWidget):
             size=self._size,
             fill=fill,
             arrows=arrows_list,
-            coordinates=True
+            coordinates=self.show_coordinates,
+            colors=colors
         )
         
         return svg.encode('utf-8')

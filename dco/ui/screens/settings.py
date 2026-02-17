@@ -6,9 +6,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QFormLayout, QSpinBox, QDoubleSpinBox,
     QCheckBox, QLineEdit, QComboBox, QGroupBox, QFileDialog,
-    QMessageBox, QScrollArea
+    QMessageBox, QScrollArea, QColorDialog
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 
 from ...core.settings import get_settings
 from ...data.db import Database
@@ -23,6 +24,11 @@ class SettingsScreen(QWidget):
         super().__init__(parent)
         self.db = db
         self.settings = get_settings()
+        
+        # Store current color values
+        self.current_light_color = self.settings.get_board_light_color()
+        self.current_dark_color = self.settings.get_board_dark_color()
+        
         self.init_ui()
         self.load_settings()
     
@@ -414,15 +420,27 @@ class SettingsScreen(QWidget):
         color_form = QFormLayout()
         color_form.setSpacing(15)
         
-        self.board_light_color = QLineEdit()
-        self.board_light_color.setPlaceholderText("#f0d9b5")
+        # Light square color picker
+        light_color_layout = QHBoxLayout()
+        self.board_light_color = QPushButton()
         self.board_light_color.setMinimumWidth(150)
-        color_form.addRow("Light Squares:", self.board_light_color)
+        self.board_light_color.setMinimumHeight(35)
+        self.board_light_color.setCursor(Qt.PointingHandCursor)
+        self.board_light_color.clicked.connect(lambda: self._pick_color('light'))
+        light_color_layout.addWidget(self.board_light_color)
+        light_color_layout.addStretch()
+        color_form.addRow("Light Squares:", light_color_layout)
         
-        self.board_dark_color = QLineEdit()
-        self.board_dark_color.setPlaceholderText("#b58863")
+        # Dark square color picker
+        dark_color_layout = QHBoxLayout()
+        self.board_dark_color = QPushButton()
         self.board_dark_color.setMinimumWidth(150)
-        color_form.addRow("Dark Squares:", self.board_dark_color)
+        self.board_dark_color.setMinimumHeight(35)
+        self.board_dark_color.setCursor(Qt.PointingHandCursor)
+        self.board_dark_color.clicked.connect(lambda: self._pick_color('dark'))
+        dark_color_layout.addWidget(self.board_dark_color)
+        dark_color_layout.addStretch()
+        color_form.addRow("Dark Squares:", dark_color_layout)
         
         board_layout.addLayout(color_form)
         
@@ -535,8 +553,10 @@ class SettingsScreen(QWidget):
         
         # Appearance
         self.theme_combo.setCurrentText(self.settings.get_theme())
-        self.board_light_color.setText(self.settings.get_board_light_color())
-        self.board_dark_color.setText(self.settings.get_board_dark_color())
+        self.current_light_color = self.settings.get_board_light_color()
+        self.current_dark_color = self.settings.get_board_dark_color()
+        self._update_color_button(self.board_light_color, self.current_light_color)
+        self._update_color_button(self.board_dark_color, self.current_dark_color)
         self.show_coordinates.setChecked(self.settings.get_show_coordinates())
         
         # General
@@ -570,8 +590,8 @@ class SettingsScreen(QWidget):
         
         # Appearance
         self.settings.set_theme(self.theme_combo.currentText())
-        self.settings.set_board_light_color(self.board_light_color.text())
-        self.settings.set_board_dark_color(self.board_dark_color.text())
+        self.settings.set_board_light_color(self.current_light_color)
+        self.settings.set_board_dark_color(self.current_dark_color)
         self.settings.set_show_coordinates(self.show_coordinates.isChecked())
         
         # General
@@ -583,11 +603,13 @@ class SettingsScreen(QWidget):
         self.settings.sync()
         
         # Show confirmation
+        message = "Your settings have been saved successfully."
+        message += "\\n\\nTheme and board color changes will take effect when you restart the application or open a new board."
+        
         QMessageBox.information(
             self,
             "Settings Saved",
-            "Your settings have been saved successfully.\n\n"
-            "Some changes may require restarting the application to take effect."
+            message
         )
         
         self.settings_changed.emit()
