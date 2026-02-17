@@ -527,6 +527,49 @@ class SettingsScreen(QWidget):
         if file_path:
             self.engine_path_edit.setText(file_path)
     
+    def _pick_color(self, square_type: str):
+        """Open color picker dialog for board squares."""
+        if square_type == 'light':
+            current_color = QColor(self.current_light_color)
+            title = "Pick Light Square Color"
+        else:
+            current_color = QColor(self.current_dark_color)
+            title = "Pick Dark Square Color"
+        
+        color = QColorDialog.getColor(current_color, self, title)
+        
+        if color.isValid():
+            color_hex = color.name()
+            if square_type == 'light':
+                self.current_light_color = color_hex
+                self._update_color_button(self.board_light_color, color_hex)
+            else:
+                self.current_dark_color = color_hex
+                self._update_color_button(self.board_dark_color, color_hex)
+    
+    def _update_color_button(self, button: QPushButton, color_hex: str):
+        """Update color button appearance."""
+        # Calculate text color (black or white) based on background brightness
+        color = QColor(color_hex)
+        brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000
+        text_color = "#000000" if brightness > 128 else "#ffffff"
+        
+        button.setText(color_hex.upper())
+        button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {color_hex};
+                color: {text_color};
+                border: 2px solid #d1d5db;
+                border-radius: 6px;
+                padding: 8px;
+                font-weight: bold;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                border: 2px solid #9ca3af;
+            }}
+        """)
+    
     def load_settings(self):
         """Load settings from storage into UI."""
         # Engine
