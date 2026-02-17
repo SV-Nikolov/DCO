@@ -2,13 +2,15 @@
 Settings screen for configuring application preferences.
 """
 
+import sys
+import os
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QFormLayout, QSpinBox, QDoubleSpinBox,
     QCheckBox, QLineEdit, QComboBox, QGroupBox, QFileDialog,
     QMessageBox, QScrollArea, QColorDialog
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QCoreApplication
 from PySide6.QtGui import QColor
 
 from ...core.settings import get_settings
@@ -40,11 +42,13 @@ class SettingsScreen(QWidget):
         
         # Header
         header = QLabel("Settings")
-        header.setStyleSheet("font-size: 32px; font-weight: bold; color: #1f2937;")
+        header.setObjectName("screenTitle")
+        header.setStyleSheet("font-size: 32px; font-weight: bold;")
         layout.addWidget(header)
         
         subtitle = QLabel("Configure application preferences")
-        subtitle.setStyleSheet("font-size: 14px; color: #6b7280; margin-bottom: 10px;")
+        subtitle.setObjectName("mutedText")
+        subtitle.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(subtitle)
         
         # Tab widget
@@ -86,6 +90,23 @@ class SettingsScreen(QWidget):
         # Buttons
         button_layout = QHBoxLayout()
         button_layout.addStretch()
+        
+        restart_btn = QPushButton("Restart Application")
+        restart_btn.clicked.connect(self._on_restart)
+        restart_btn.setStyleSheet("""
+            QPushButton {
+                background: #8b5cf6;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #7c3aed;
+            }
+        """)
+        button_layout.addWidget(restart_btn)
         
         reset_btn = QPushButton("Reset to Defaults")
         reset_btn.clicked.connect(self._on_reset)
@@ -676,3 +697,19 @@ class SettingsScreen(QWidget):
                 "Settings Reset",
                 "All settings have been reset to default values."
             )
+    
+    def _on_restart(self):
+        """Restart the application to apply settings changes."""
+        reply = QMessageBox.question(
+            self,
+            "Restart Application",
+            "Do you want to restart DCO now to apply all settings?\n\n"
+            "Make sure to save any unsaved changes before restarting.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            QCoreApplication.quit()
+            python = sys.executable
+            os.execl(python, python, *sys.argv)

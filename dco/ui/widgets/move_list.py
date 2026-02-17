@@ -89,24 +89,6 @@ class MoveListWidget(QWidget):
             "#", "White", "Black", "Eval"
         ])
         
-        # Set table stylesheet for proper text colors
-        self.table.setStyleSheet("""
-            QTableWidget {
-                color: #000000;
-            }
-            QTableWidget::item {
-                color: #000000;
-            }
-            QHeaderView::section {
-                color: #1f2937;
-                background-color: #f3f4f6;
-                padding: 8px;
-                border: none;
-                border-bottom: 1px solid #d1d5db;
-                font-weight: bold;
-            }
-        """)
-        
         # Configure table
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -152,7 +134,6 @@ class MoveListWidget(QWidget):
             # Move number
             move_num = QTableWidgetItem(str(row + 1))
             move_num.setTextAlignment(Qt.AlignCenter)
-            move_num.setForeground(QColor(0, 0, 0))  # Black text
             self.table.setItem(row, 0, move_num)
             
             # White's move
@@ -165,14 +146,12 @@ class MoveListWidget(QWidget):
                 self.table.setItem(row, 2, black_item)
             else:
                 empty_item = QTableWidgetItem("")
-                empty_item.setForeground(QColor(0, 0, 0))
                 self.table.setItem(row, 2, empty_item)
             
             # Evaluation (show after White's move)
             eval_text = self._format_eval(white_move.eval_after_cp)
             eval_item = QTableWidgetItem(eval_text)
             eval_item.setTextAlignment(Qt.AlignCenter)
-            eval_item.setForeground(QColor(0, 0, 0))  # Black text
             self.table.setItem(row, 3, eval_item)
     
     def _create_move_item(self, move: Move) -> QTableWidgetItem:

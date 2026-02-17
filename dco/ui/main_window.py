@@ -82,12 +82,7 @@ class MainWindow(QMainWindow):
         
         # App title
         title_label = QLabel("DCO")
-        title_label.setStyleSheet("""
-            font-size: 24px;
-            font-weight: bold;
-            padding: 20px;
-            color: #1f2937;
-        """)
+        title_label.setObjectName("appTitle")
         layout.addWidget(title_label)
         
         # Navigation buttons

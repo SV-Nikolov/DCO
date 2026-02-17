@@ -184,6 +184,13 @@ QLabel#versionLabel {
     font-size: 11px;
 }
 
+QLabel#appTitle {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 20px;
+    color: #1f2937;
+}
+
 QLabel#placeholderText {
     font-size: 16px;
     color: #94a3b8;
@@ -973,6 +980,17 @@ QTabBar::tab:hover {
 QScrollArea {
     border: none;
     background-color: transparent;
+}
+
+/* =================================================================
+   LABELS - DARK THEME
+   ================================================================= */
+
+QLabel#appTitle {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 20px;
+    color: #f1f5f9;
 }
 """
 
