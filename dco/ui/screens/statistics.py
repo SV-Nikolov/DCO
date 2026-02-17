@@ -24,6 +24,14 @@ from ...data.models import Game, Analysis, GameAnalytics
 class StatisticsScreen(QWidget):
     """Statistics dashboard screen."""
 
+    SVG_FONT_FAMILY = "Segoe UI, Trebuchet MS, Verdana, sans-serif"
+    SVG_TITLE_SIZE = 10
+    SVG_DATA_SIZE = 9
+    SVG_LABEL_SIZE = 9
+    SVG_TITLE_COLOR = "#cbd5f5"
+    SVG_DATA_COLOR = "#e2e8f0"
+    SVG_MUTED_COLOR = "#94a3b8"
+
     def __init__(self, db: Database, parent=None):
         super().__init__(parent)
         self.db = db
@@ -265,10 +273,10 @@ class StatisticsScreen(QWidget):
     def _build_sparkline(self, values, title: str, color: str) -> str:
         if not values:
             return (
-                "<svg viewBox='0 0 180 60' class='spark-svg'>"
+                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 60' class='spark-svg'>"
                 "<rect x='0' y='0' width='180' height='60' rx='10' fill='#0b1220'/>"
-                f"<text x='10' y='20' class='svg-title'>{title}</text>"
-                "<text x='10' y='40' class='svg-label'>No data</text>"
+                f"<text x='10' y='20' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_TITLE_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{title}</text>"
+                f"<text x='10' y='40' fill='{self.SVG_DATA_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>No data</text>"
                 "</svg>"
             )
 
@@ -284,13 +292,13 @@ class StatisticsScreen(QWidget):
         polyline = " ".join(points)
 
         return (
-            "<svg viewBox='0 0 180 60' class='spark-svg'>"
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 60' class='spark-svg'>"
             "<defs><linearGradient id='spark' x1='0' x2='1' y1='0' y2='0'>"
             f"<stop offset='0%' stop-color='{color}' stop-opacity='0.2'/>"
             f"<stop offset='100%' stop-color='{color}' stop-opacity='0.6'/>"
             "</linearGradient></defs>"
             "<rect x='0' y='0' width='180' height='60' rx='10' fill='#0b1220'/>"
-            f"<text x='10' y='18' class='svg-title'>{title}</text>"
+            f"<text x='10' y='18' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_TITLE_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{title}</text>"
             f"<polyline fill='none' stroke='{color}' stroke-width='2' points='{polyline}'/>"
             f"<polyline fill='url(#spark)' opacity='0.35' points='10,50 {polyline} 170,50'/>"
             "</svg>"
@@ -319,16 +327,16 @@ class StatisticsScreen(QWidget):
                 f"<rect x='{x}' y='{y}' width='34' height='{height}' rx='6' fill='#0ea5e9'></rect>"
             )
             labels.append(
-                f"<text x='{x + 17}' y='130' text-anchor='middle' class='svg-label'>{label}</text>"
+                f"<text x='{x + 17}' y='130' text-anchor='middle' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_LABEL_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{label}</text>"
             )
             labels.append(
-                f"<text x='{x + 17}' y='{y - 6}' text-anchor='middle' class='svg-value'>{pct * 100:.1f}%</text>"
+                f"<text x='{x + 17}' y='{y - 6}' text-anchor='middle' fill='{self.SVG_DATA_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{pct * 100:.1f}%</text>"
             )
 
         return (
-            "<svg viewBox='0 0 380 140' class='chart-svg'>"
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 380 140' class='chart-svg'>"
             "<rect x='0' y='0' width='380' height='140' rx='12' fill='#0b1220'/>"
-            "<text x='16' y='22' class='svg-title'>CPL Distribution</text>"
+            f"<text x='16' y='22' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_TITLE_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>CPL Distribution</text>"
             + "".join(bars)
             + "".join(labels)
             + "</svg>"
@@ -367,16 +375,18 @@ class StatisticsScreen(QWidget):
             bars.append(f"<rect x='{x}' y='{y_b}' width='40' height='{b_height}' rx='6' fill='#ef4444'></rect>")
             bars.append(f"<rect x='{x}' y='{y_m}' width='40' height='{m_height}' rx='6' fill='#f59e0b'></rect>")
             bars.append(f"<rect x='{x}' y='{y_i}' width='40' height='{i_height}' rx='6' fill='#22c55e'></rect>")
-            labels.append(f"<text x='{x + 20}' y='145' text-anchor='middle' class='svg-label'>{phase_labels[phase]}</text>")
             labels.append(
-                f"<text x='{x + 20}' y='{y_i - 6}' text-anchor='middle' class='svg-value'>{(blunders + mistakes + inaccuracies):.2f}</text>"
+                f"<text x='{x + 20}' y='145' text-anchor='middle' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_LABEL_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{phase_labels[phase]}</text>"
+            )
+            labels.append(
+                f"<text x='{x + 20}' y='{y_i - 6}' text-anchor='middle' fill='{self.SVG_DATA_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{(blunders + mistakes + inaccuracies):.2f}</text>"
             )
 
         return (
-            "<svg viewBox='0 0 380 160' class='chart-svg'>"
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 380 160' class='chart-svg'>"
             "<rect x='0' y='0' width='380' height='160' rx='12' fill='#0b1220'/>"
-            "<text x='16' y='22' class='svg-title'>Errors per Game (Phase)</text>"
-            "<text x='260' y='22' class='svg-legend'>Red=Blunders · Amber=Mistakes · Green=Inaccuracies</text>"
+            f"<text x='16' y='22' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_TITLE_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>Errors per Game (Phase)</text>"
+            f"<text x='16' y='38' fill='{self.SVG_MUTED_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>Red=Blunders · Amber=Mistakes · Green=Inaccuracies</text>"
             + "".join(bars)
             + "".join(labels)
             + "</svg>"
@@ -391,12 +401,12 @@ class StatisticsScreen(QWidget):
         pct = rate * 100
 
         return (
-            "<svg viewBox='0 0 140 140' class='gauge-svg'>"
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 140' class='gauge-svg'>"
             "<circle cx='70' cy='70' r='52' fill='#0b1220'/>"
             "<circle cx='70' cy='70' r='46' fill='none' stroke='#1f2937' stroke-width='10'/>"
             f"<circle cx='70' cy='70' r='{radius}' fill='none' stroke='#38bdf8' stroke-width='10' stroke-dasharray='{dash:.1f} {gap:.1f}' stroke-linecap='round' transform='rotate(-90 70 70)'/>"
-            f"<text x='70' y='72' text-anchor='middle' class='gauge-value'>{pct:.1f}%</text>"
-            "<text x='70' y='92' text-anchor='middle' class='gauge-label'>Critical</text>"
+            f"<text x='70' y='72' text-anchor='middle' fill='#f8fafc' font-size='15' font-weight='700' font-family='{self.SVG_FONT_FAMILY}'>{pct:.1f}%</text>"
+            f"<text x='70' y='92' text-anchor='middle' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_LABEL_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>Critical</text>"
             "</svg>"
         )
 
@@ -404,19 +414,22 @@ class StatisticsScreen(QWidget):
         white_acpl = self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"]))
         black_acpl = self._avg_safe(color_stats["black"]["acpl_sum"], int(color_stats["black"]["acpl_count"]))
         max_val = max(white_acpl, black_acpl, 1.0)
-        white_height = int(70 * (white_acpl / max_val))
-        black_height = int(70 * (black_acpl / max_val))
+        bar_max = 64
+        base_y = 102
+        label_y = 124
+        white_height = int(bar_max * (white_acpl / max_val))
+        black_height = int(bar_max * (black_acpl / max_val))
 
         return (
-            "<svg viewBox='0 0 200 110' class='chart-svg'>"
-            "<rect x='0' y='0' width='200' height='110' rx='12' fill='#0b1220'/>"
-            "<text x='14' y='20' class='svg-title'>ACPL by Color</text>"
-            f"<rect x='50' y='{90 - white_height}' width='30' height='{white_height}' rx='6' fill='#38bdf8'></rect>"
-            f"<rect x='120' y='{90 - black_height}' width='30' height='{black_height}' rx='6' fill='#f97316'></rect>"
-            "<text x='65' y='102' text-anchor='middle' class='svg-label'>White</text>"
-            "<text x='135' y='102' text-anchor='middle' class='svg-label'>Black</text>"
-            f"<text x='65' y='{90 - white_height - 6}' text-anchor='middle' class='svg-value'>{white_acpl:.1f}</text>"
-            f"<text x='135' y='{90 - black_height - 6}' text-anchor='middle' class='svg-value'>{black_acpl:.1f}</text>"
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 130' class='chart-svg'>"
+            "<rect x='0' y='0' width='200' height='130' rx='12' fill='#0b1220'/>"
+            f"<text x='14' y='18' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_TITLE_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>ACPL by Color</text>"
+            f"<rect x='50' y='{base_y - white_height}' width='30' height='{white_height}' rx='6' fill='#38bdf8'></rect>"
+            f"<rect x='120' y='{base_y - black_height}' width='30' height='{black_height}' rx='6' fill='#f97316'></rect>"
+            f"<text x='65' y='{label_y}' text-anchor='middle' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_LABEL_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>White</text>"
+            f"<text x='135' y='{label_y}' text-anchor='middle' fill='{self.SVG_TITLE_COLOR}' font-size='{self.SVG_LABEL_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>Black</text>"
+            f"<text x='65' y='{base_y - white_height - 10}' text-anchor='middle' fill='{self.SVG_DATA_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{white_acpl:.1f}</text>"
+            f"<text x='135' y='{base_y - black_height - 10}' text-anchor='middle' fill='{self.SVG_DATA_COLOR}' font-size='{self.SVG_DATA_SIZE}' font-family='{self.SVG_FONT_FAMILY}'>{black_acpl:.1f}</text>"
             "</svg>"
         )
 
@@ -480,24 +493,45 @@ class StatisticsScreen(QWidget):
         css = """
             :root {
                 --ink: #0f172a;
-                --muted: #64748b;
+                --muted: #475569;
                 --card: #ffffff;
                 --line: #e2e8f0;
-                --accent: #38bdf8;
+                --accent: #0ea5e9;
                 --deep: #0b1220;
-                --glow: rgba(14, 165, 233, 0.15);
+                --glow: rgba(14, 165, 233, 0.18);
+                --bg: radial-gradient(circle at top left, #e2e8f0 0%, #f8fafc 42%, #f1f5f9 100%);
+                --hero-bg: linear-gradient(135deg, #0b1220 0%, #1f2937 100%);
+                --hero-text: #f8fafc;
+                --hero-subtext: #cbd5f5;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --ink: #e2e8f0;
+                    --muted: #94a3b8;
+                    --card: #0f172a;
+                    --line: #1e293b;
+                    --accent: #38bdf8;
+                    --glow: rgba(14, 165, 233, 0.22);
+                    --bg: radial-gradient(circle at top left, #0b1220 0%, #0f172a 45%, #111827 100%);
+                    --hero-bg: linear-gradient(135deg, #111827 0%, #0b1220 100%);
+                    --hero-text: #f8fafc;
+                    --hero-subtext: #cbd5f5;
+                }
             }
             body {
-                font-family: Trebuchet MS, Verdana, sans-serif;
-                background: radial-gradient(circle at top left, #e2e8f0 0%, #f8fafc 42%, #f1f5f9 100%);
+                font-family: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+                background: var(--bg);
                 color: var(--ink);
+                font-size: 13px;
+                line-height: 1.45;
+                letter-spacing: 0.1px;
             }
             .wrap {
                 padding: 12px 8px 24px 8px;
             }
             .hero {
-                background: linear-gradient(135deg, #0b1220 0%, #1f2937 100%);
-                color: #f8fafc;
+                background: var(--hero-bg);
+                color: var(--hero-text);
                 border-radius: 16px;
                 padding: 20px 22px;
                 margin-bottom: 18px;
@@ -506,10 +540,12 @@ class StatisticsScreen(QWidget):
             .hero h2 {
                 margin: 0 0 6px 0;
                 font-size: 22px;
+                font-weight: 700;
             }
             .hero p {
                 margin: 0;
-                color: #cbd5f5;
+                color: var(--hero-subtext);
+                font-size: 12px;
             }
             .grid {
                 display: grid;
@@ -525,25 +561,30 @@ class StatisticsScreen(QWidget):
             }
             .card h3 {
                 margin: 0 0 6px 0;
-                font-size: 14px;
+                font-size: 11px;
                 text-transform: uppercase;
-                letter-spacing: 0.08em;
+                letter-spacing: 0.12em;
                 color: var(--muted);
             }
             .big {
-                font-size: 26px;
+                font-size: 21px;
                 font-weight: 700;
                 margin: 0;
             }
             .subtle {
                 color: var(--muted);
-                font-size: 12px;
+                font-size: 11px;
             }
             .row {
                 display: flex;
                 justify-content: space-between;
                 margin: 6px 0;
-                font-size: 13px;
+                font-size: 12px;
+                gap: 12px;
+            }
+            .row span:last-child {
+                text-align: right;
+                font-weight: 600;
             }
             .bar {
                 height: 8px;
@@ -567,8 +608,9 @@ class StatisticsScreen(QWidget):
             }
             .section-title {
                 margin: 18px 0 8px 0;
-                font-size: 15px;
+                font-size: 13px;
                 color: var(--ink);
+                font-weight: 600;
             }
             .split {
                 display: grid;
