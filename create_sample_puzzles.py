@@ -20,8 +20,8 @@ def create_sample_puzzles():
             "source": "sample"
         },
         {
-            "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 2 5",
-            "solution": ["c4f7", "e8f7", "d1d5"],  # Bxf7+ Kxf7 Qd5+ forking king and rook
+            "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+            "solution": ["c4f7", "e8f7", "f3g5", "f7e8", "d1h5"],  # Bxf7+ Kxf7 Ng5+ Ke8 Qh5+ winning
             "theme": PuzzleTheme.TACTIC,
             "rating": 1200,
             "source": "sample"
@@ -34,31 +34,31 @@ def create_sample_puzzles():
             "source": "sample"
         },
         {
-            "fen": "r2qkb1r/ppp2ppp/2n5/3pP3/2Bn4/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7",
-            "solution": ["d1d5"],  # Qd5 - Forking knight on e4 and bishop on c5
+            "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+            "solution": ["f3g5", "d7d5", "g5f7"],  # Ng5 d5 Nxf7 winning rook (Fried Liver prep)
             "theme": PuzzleTheme.TACTIC,
             "rating": 1400,
             "source": "sample"
         },
         {
             "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2BPP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5",
-            "solution": ["c6d4", "f3d4", "c5f2"],  # Nd4! Nxd4 Bxf2+ winning the exchange
+            "solution": ["c6d4", "f3d4", "c5d4"],  # Nd4! Nxd4 Bxd4 winning a pawn
             "theme": PuzzleTheme.TACTIC,
             "rating": 1500,
             "source": "sample"
         },
         {
-            "fen": "r2qkb1r/ppp2ppp/2np1n2/4p3/2B1P1b1/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 1 6",
-            "solution": ["c4f7", "e8f7", "f3e5", "f7e8", "e5g4"],  # Bxf7+ Kxf7 Ne5+ Ke8 Nxg4 winning bishop
+            "fen": "r2qk2r/ppp2ppp/2np1n2/2b1p1B1/2B1P1b1/3P1N2/PPP2PPP/RN1QK2R w KQkq - 0 7",
+            "solution": ["c4f7", "e8f7", "f3e5"],  # Bxf7+ Kxf7 Ne5+ forking king and queen
             "theme": PuzzleTheme.MATERIAL,
             "rating": 1600,
             "source": "sample"
         },
         {
-            "fen": "r1bqk2r/pppp1ppp/2n2n2/2b5/2BpP3/5N2/PPP2PPP/RNBQ1RK1 w kq - 0 6",
-            "solution": ["c4f7", "e8f7", "f3g5", "f7e8", "d1h5"],  # Bxf7+ Kxf7 Ng5+ Ke8 Qh5+ winning
+            "fen": "rnbqkb1r/pppp1ppp/5n2/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 3",
+            "solution": ["d1f3", "d7d6", "c4f7"],  # Qf3 d6 Bxf7# - Scholar's mate
             "theme": PuzzleTheme.MATE,
-            "rating": 1700,
+            "rating": 700,
             "source": "sample"
         },
         {
