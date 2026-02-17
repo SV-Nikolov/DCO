@@ -70,45 +70,63 @@ class ChessEngine:
     def _find_stockfish(self) -> Optional[str]:
         """
         Try to find Stockfish executable on the system.
+        Searches in PATH, common installation directories, and user-provided paths.
         
         Returns:
             Path to Stockfish executable, or None if not found
         """
-        # Common names for Stockfish executable
-        exe_names = ['stockfish', 'stockfish.exe', 'stockfish_x64.exe']
+        # Common executable names for Stockfish
+        exe_names = ['stockfish', 'stockfish.exe', 'stockfish_x64.exe', 'stockfish_x64_popcnt.exe']
         
-        # Check if stockfish is in PATH
+        # 1. Check if stockfish is in PATH
         for name in exe_names:
             path = shutil.which(name)
             if path:
                 return path
         
-        # Check common installation directories (Windows)
-        common_paths = [
+        # 2. Check common Windows installation directories
+        common_windows_paths = [
             r"C:\Program Files\Stockfish\stockfish.exe",
+            r"C:\Program Files\Stockfish\stockfish_x64.exe",
             r"C:\Program Files (x86)\Stockfish\stockfish.exe",
             os.path.expanduser("~\\AppData\\Local\\Stockfish\\stockfish.exe"),
+            os.path.expanduser("~\\AppData\\Local\\Stockfish\\stockfish_x64.exe"),
+            os.path.expanduser("~\\Stockfish\\stockfish.exe"),
         ]
         
-        for path in common_paths:
+        for path in common_windows_paths:
             if os.path.exists(path):
                 return path
         
-        # Check current directory and subdirectories for any stockfish executable
-        search_patterns = [
-            "stockfish*.exe",
-            "stockfish",
-            "engines/stockfish*.exe",
-            "engines/stockfish",
-            "dco/stockfish/stockfish*.exe",
-            "dco/stockfish/stockfish",
+        # 3. Check Downloads folder
+        downloads_path = os.path.expanduser("~\\Downloads")
+        if os.path.exists(downloads_path):
+            for pattern in ["stockfish*.exe", "stockfish"]:
+                matches = glob.glob(os.path.join(downloads_path, "**", pattern), recursive=True)
+                if matches:
+                    return os.path.abspath(matches[0])
+        
+        # 4. Check macOS common paths
+        macos_paths = [
+            "/usr/local/bin/stockfish",
+            "/opt/homebrew/bin/stockfish",
+            os.path.expanduser("~/stockfish/src/stockfish"),
         ]
         
-        for pattern in search_patterns:
-            matches = glob.glob(pattern)
-            if matches:
-                # Return the first match
-                return os.path.abspath(matches[0])
+        for path in macos_paths:
+            if os.path.exists(path):
+                return path
+        
+        # 5. Check Linux common paths
+        linux_paths = [
+            "/usr/bin/stockfish",
+            "/usr/local/bin/stockfish",
+            os.path.expanduser("~/stockfish/src/stockfish"),
+        ]
+        
+        for path in linux_paths:
+            if os.path.exists(path):
+                return path
         
         return None
     
@@ -118,14 +136,24 @@ class ChessEngine:
         
         Returns:
             True if engine started successfully, False otherwise
+            
+        Raises:
+            RuntimeError: If Stockfish cannot be found or started
         """
         if self.engine:
             return True
         
         if not self.config.path:
             raise RuntimeError(
-                "Stockfish not found. Please install Stockfish and configure "
-                "the path in settings, or place stockfish.exe in the application directory."
+                "Stockfish not found. Please download and install Stockfish:\n\n"
+                "1. Visit: https://stockfishchess.org/download/\n"
+                "2. Download the latest version for your operating system\n"
+                "3. Extract and install it (or place it in a convenient location)\n\n"
+                "After installation, you can:\n"
+                "- Using Settings → Engine → Browse to specify the path\n"
+                "- Or, place stockfish.exe in your Program Files or PATH\n"
+                "- DCO will auto-detect it from common locations\n\n"
+                "For detailed instructions, see: INSTALL_STOCKFISH.md"
             )
         
         if not os.path.exists(self.config.path):

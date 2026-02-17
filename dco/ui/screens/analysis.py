@@ -70,12 +70,20 @@ class AnalysisWorker(QThread):
             
         except Exception as e:
             error_msg = str(e)
-            if "Stockfish not found" in error_msg:
-                error_msg += "\n\nTo install Stockfish:\n"
-                error_msg += "1. Download from: https://stockfishchess.org/download/\n"
-                error_msg += "2. Extract the ZIP file\n"
-                error_msg += "3. Copy stockfish.exe to the DCO directory\n"
-                error_msg += "\nSee INSTALL_STOCKFISH.md for detailed instructions."
+            if "Stockfish not found" in error_msg or "Stockfish" in error_msg.lower():
+                error_msg = (
+                    "Stockfish engine not found.\n\n"
+                    "To use the analysis feature:\n"
+                    "1. Visit: https://stockfishchess.org/download/\n"
+                    "2. Download Stockfish for your operating system\n"
+                    "3. Extract/Install it to a convenient location\n"
+                    "4. In Settings → Engine → Browse, select the stockfish executable\n\n"
+                    "Or let DCO auto-detect from:\n"
+                    "- Program Files/Stockfish/\n"
+                    "- Your Downloads folder\n"
+                    "- Your PATH environment variable\n\n"
+                    "For more help, see INSTALL_STOCKFISH.md"
+                )
             self.finished.emit(False, f"Analysis failed: {error_msg}")
 
 

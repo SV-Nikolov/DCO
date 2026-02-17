@@ -162,13 +162,13 @@ class SettingsScreen(QWidget):
         path_layout.setSpacing(10)
         path_layout.setContentsMargins(15, 15, 15, 15)
         
-        path_info = QLabel("Specify a custom Stockfish engine path (leave empty for auto-detect)")
-        path_info.setStyleSheet("color: #6b7280; font-size: 12px;")
+        path_info = QLabel("Download Stockfish from https://stockfishchess.org/download/ and specify the path here (or leave blank for auto-detection)")
+        path_info.setObjectName("mutedText")
         path_layout.addWidget(path_info)
         
         path_row = QHBoxLayout()
         self.engine_path_edit = QLineEdit()
-        self.engine_path_edit.setPlaceholderText("Auto-detect")
+        self.engine_path_edit.setPlaceholderText("Auto-detect from standard locations")
         self.engine_path_edit.setMinimumWidth(400)
         path_row.addWidget(self.engine_path_edit)
         

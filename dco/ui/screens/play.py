@@ -875,13 +875,16 @@ class PlayScreen(QWidget):
         """Handle game start from setup menu."""
         # Start engine if not already started
         if not self.engine_started:
-            if not self.engine.start():
-                QMessageBox.critical(self, "Engine Error", 
-                                   "Failed to start chess engine.\n\n"
-                                   "Please ensure Stockfish is installed correctly.\n"
-                                   f"Looking for: {self.engine.stockfish_path}")
+            try:
+                if not self.engine.start():
+                    QMessageBox.critical(self, "Engine Error", 
+                                       "Failed to start chess engine.\n\n"
+                                       "Please check your Stockfish installation and settings.")
+                    return
+                self.engine_started = True
+            except RuntimeError as e:
+                QMessageBox.critical(self, "Stockfish Not Found", str(e))
                 return
-            self.engine_started = True
         
         user_color = chess.WHITE if user_is_white else chess.BLACK
         self.game_view.start_game(elo, time_minutes, increment, user_color, 

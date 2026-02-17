@@ -1,50 +1,45 @@
 # Installing Stockfish for DCO
 
-DCO requires Stockfish chess engine to analyze games. Here's how to install it:
+**IMPORTANT**: Stockfish is **NOT** included with DCO. You must download and install it separately.
+
+Stockfish is a free, open-source chess engine. DCO uses it for game analysis and as an opponent when playing against the computer.
+
+## Quick Start
+
+1. **Download Stockfish** from https://stockfishchess.org/download/
+2. **Extract/Install** it to any location on your computer
+3. **Launch DCO** - it will auto-detect Stockfish from standard locations
+4. **If auto-detection fails**: Settings → Engine → "Browse..." → Select stockfish executable → Restart DCO
+
+---
 
 ## Windows
 
-### Option 1: Download and Extract (Recommended)
+### Option 1: Download and Extract (Auto-Detection)
 
 1. **Download Stockfish**:
    - Go to https://stockfishchess.org/download/
    - Download the latest Windows version (e.g., "stockfish-windows-x86-64.zip")
 
-2. **Extract to DCO Directory**:
-   - Extract the ZIP file
-   - Copy `stockfish.exe` (or `stockfish_x64.exe`) to your DCO folder: `C:\Source\DCO\`
-   - Rename it to `stockfish.exe` if needed
+2. **Extract to Program Files**:
+   - Right-click the ZIP → Extract All
+   - Choose location: `C:\Program Files\Stockfish`
+   - Extract all files there
 
-3. **Verify Installation**:
-   - Open PowerShell in the DCO folder
-   - Run: `.\stockfish.exe`
-   - You should see "Stockfish ... by ..." message
-   - Type `quit` to exit
+3. **Launch DCO**: `python app.py`
+   - Stockfish will be auto-detected from Program Files
 
-### Option 2: Install to System PATH
+### Option 2: Manual Configuration
 
-1. **Download Stockfish**: Same as above
+If Stockfish is in a non-standard location or auto-detection fails:
 
-2. **Create Stockfish Directory**:
-   ```powershell
-   mkdir "C:\Program Files\Stockfish"
-   ```
-
-3. **Copy Executable**:
-   - Copy `stockfish.exe` to `C:\Program Files\Stockfish\`
-
-4. **Add to PATH**:
-   - Right-click "This PC" → Properties → Advanced System Settings
-   - Click "Environment Variables"
-   - Under "System variables", select "Path" → Edit
-   - Click "New" and add: `C:\Program Files\Stockfish`
-   - Click OK on all dialogs
-   - Restart PowerShell/Command Prompt
-
-5. **Verify**:
-   ```powershell
-   stockfish
-   ```
+1. **Install Stockfish** anywhere you prefer
+2. **Launch DCO** and open Settings
+3. Go to Engine tab
+4. Click **"Browse..."** button
+5. Navigate to your `stockfish.exe` (or `stockfish` on macOS/Linux)
+6. Click **"Save Settings"**
+7. Restart DCO for changes to take effect
 
 ## Quick Test in DCO
 
@@ -70,15 +65,19 @@ stockfish
 ```
 
 **DCO looks for Stockfish in these locations (in order)**:
-1. Current directory: `C:\Source\DCO\stockfish.exe`
-2. Subdirectory: `C:\Source\DCO\engines\stockfish.exe`
-3. System PATH
-4. Common install locations:
+1. System PATH - `stockfish` or `stockfish.exe` command
+2. Windows Standard Paths:
    - `C:\Program Files\Stockfish\stockfish.exe`
    - `C:\Program Files (x86)\Stockfish\stockfish.exe`
-   - `%LOCALAPPDATA%\Stockfish\stockfish.exe`
+   - `%APPDATA%\Local\Stockfish\stockfish.exe`
+3. Downloads folder - `~/Downloads/stockfish*`
+4. macOS Homebrew: `/usr/local/bin/stockfish` or `/opt/homebrew/bin/stockfish`
+5. Linux standard: `/usr/bin/stockfish` or `/usr/local/bin/stockfish`
 
-**Recommended Solution**: Place `stockfish.exe` directly in `C:\Source\DCO\`
+**If auto-detection doesn't work**:
+1. Go to Settings → Engine tab
+2. Click "Browse..." to manually select your stockfish executable
+3. Restart DCO
 
 ### Version Compatibility
 
@@ -117,13 +116,14 @@ sudo pacman -S stockfish
 which stockfish
 ```
 
-## Advanced: Custom Engine Path (Future Feature)
+## Advanced: Engine Configuration
 
-Settings screen will allow you to configure:
-- Custom engine path
-- Analysis depth
-- Time per move
-- Number of threads
-- Hash table size
+In DCO Settings, you can configure:
 
-For now, DCO auto-detects Stockfish from standard locations.
+- **Engine Path**: Click "Browse..." to select a custom stockfish location
+- **CPU Threads**: Number of threads for analysis (1-16, more = faster but more CPU intensive)
+- **Hash Table Size**: Memory for analysis (16-4096 MB, more = better but uses more RAM)
+- **Analysis Depth**: Default search depth for analysis (higher = more accurate but slower)
+- **Time per Move**: How long the engine analyzes each position (seconds)
+
+For most users, the defaults work well. Adjust if needed for your system.
