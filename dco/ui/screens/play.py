@@ -23,7 +23,7 @@ import chess.pgn
 from ..widgets.chessboard import ChessboardWidget
 from ..widgets.move_list import MoveListWidget
 from ...data.db import Database
-from ...data.models import Game
+from ...data.models import Game, GameSource
 from ...engine import EngineController, DualGameClock
 
 logger = logging.getLogger(__name__)
@@ -520,7 +520,7 @@ class GameBoardView(QWidget):
             pgn_text = str(game)
             
             db_game = Game(
-                source="engine_game",
+                source=GameSource.ENGINE_PLAY,
                 event="Engine Game",
                 site="DCO",
                 date=datetime.utcnow().strftime("%Y.%m.%d"),

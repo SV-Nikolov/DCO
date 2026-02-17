@@ -17,8 +17,8 @@ Base = declarative_base()
 
 class GameSource(enum.Enum):
     """Source of the game."""
-    ENGINE_PLAY = "engine_play"
-    PGN_IMPORT = "pgn_import"
+    ENGINE_PLAY = "ENGINE_PLAY"
+    PGN_IMPORT = "PGN_IMPORT"
 
 
 class MoveClassification(enum.Enum):
