@@ -106,6 +106,13 @@ class Database:
             if "consecutive_first_try" not in progress_cols:
                 conn.execute(text("ALTER TABLE practice_progress ADD COLUMN consecutive_first_try INTEGER DEFAULT 0"))
 
+            # Add missing move analytics columns
+            moves_cols = _get_table_columns(conn, "moves")
+            if "cpl" not in moves_cols:
+                conn.execute(text("ALTER TABLE moves ADD COLUMN cpl INTEGER"))
+            if "player_color" not in moves_cols:
+                conn.execute(text("ALTER TABLE moves ADD COLUMN player_color VARCHAR(5)"))
+
     def _migrate_legacy_db_if_needed(self) -> None:
         """Move legacy root database into data/db if needed."""
         default_path = os.path.join(os.getcwd(), "data", "db", "dco_data.db")

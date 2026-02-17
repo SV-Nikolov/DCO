@@ -103,6 +103,7 @@ class Game(Base):
     
     # Relationships
     analysis = relationship("Analysis", back_populates="game", uselist=False)
+    analytics = relationship("GameAnalytics", back_populates="game", uselist=False)
     moves = relationship("Move", back_populates="game", cascade="all, delete-orphan")
     practice_items = relationship("PracticeItem", back_populates="game")
     
@@ -163,6 +164,10 @@ class Move(Base):
     eval_before_cp = Column(Integer)
     eval_best_cp = Column(Integer)  # If best move was played
     eval_after_cp = Column(Integer)
+
+    # Derived evaluation data (from player's perspective)
+    cpl = Column(Integer)
+    player_color = Column(String(5))  # 'white' or 'black'
     
     # Best move info
     best_uci = Column(String(10))
@@ -182,6 +187,52 @@ class Move(Base):
     __table_args__ = (
         Index('idx_move_game_ply', 'game_id', 'ply_index'),
         Index('idx_move_classification', 'classification'),
+    )
+
+
+class GameAnalytics(Base):
+    """Aggregated analytics for a single analyzed game."""
+    __tablename__ = "game_analytics"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    game_id = Column(Integer, ForeignKey("games.id"), nullable=False, unique=True)
+
+    # ACPL
+    acpl_overall = Column(Float)
+    acpl_opening = Column(Float)
+    acpl_middlegame = Column(Float)
+    acpl_endgame = Column(Float)
+
+    # Error rates by phase (counts + avg CPL)
+    phase_error_counts = Column(JSON)
+
+    # CPL distribution buckets
+    cpl_distribution = Column(JSON)
+
+    # Critical positions
+    critical_faced = Column(Integer)
+    critical_solved = Column(Integer)
+    critical_failed = Column(Integer)
+    critical_success_rate = Column(Float)
+    acpl_critical = Column(Float)
+
+    # Color bias
+    acpl_white = Column(Float)
+    acpl_black = Column(Float)
+    blunders_white = Column(Integer)
+    blunders_black = Column(Integer)
+    mistakes_white = Column(Integer)
+    mistakes_black = Column(Integer)
+    inaccuracies_white = Column(Integer)
+    inaccuracies_black = Column(Integer)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    game = relationship("Game", back_populates="analytics")
+
+    __table_args__ = (
+        Index('idx_game_analytics_game', 'game_id'),
     )
 
 

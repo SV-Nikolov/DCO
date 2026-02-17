@@ -13,7 +13,12 @@ from .engine import ChessEngine, EngineConfig, EngineEvaluation
 from .classification import classify_move, MoveClassification
 from .accuracy import compute_accuracy
 from .eco import get_eco_detector
-from ..data.models import Game, Analysis, Move, GameSource
+from ..data.models import Game, Analysis, Move, GameAnalytics, GameSource
+
+
+# Default phase boundaries (ply is 1-based for readability)
+OPENING_END_PLY = 12
+MIDDLEGAME_END_PLY = 60
 
 
 @dataclass
@@ -365,6 +370,8 @@ def save_analysis_to_db(
     
     # Create Move records
     for move_analysis in analysis_result.moves:
+        player_color = "white" if move_analysis.ply_index % 2 == 0 else "black"
+        cpl = _compute_cpl(player_color, move_analysis.eval_best_cp, move_analysis.eval_after_cp)
         move = Move(
             game_id=game.id,
             ply_index=move_analysis.ply_index,
@@ -375,6 +382,8 @@ def save_analysis_to_db(
             eval_before_cp=move_analysis.eval_before_cp,
             eval_best_cp=move_analysis.eval_best_cp,
             eval_after_cp=move_analysis.eval_after_cp,
+            cpl=cpl,
+            player_color=player_color,
             best_uci=move_analysis.best_uci,
             classification=move_analysis.classification.name,
             is_book=move_analysis.is_book,
@@ -383,6 +392,140 @@ def save_analysis_to_db(
             comment=move_analysis.comment
         )
         session.add(move)
+
+    # Replace existing analytics for this game
+    session.query(GameAnalytics).filter(GameAnalytics.game_id == game.id).delete()
+    analytics_row = _compute_game_analytics(game, analysis_result)
+    session.add(analytics_row)
     
     session.commit()
     return analysis
+
+
+def _compute_cpl(player_color: str, eval_best_cp: Optional[int], eval_after_cp: Optional[int]) -> Optional[int]:
+    """Compute CPL from the player's perspective."""
+    if eval_best_cp is None or eval_after_cp is None:
+        return None
+
+    if player_color == "white":
+        diff = eval_best_cp - eval_after_cp
+    else:
+        diff = eval_after_cp - eval_best_cp
+
+    return max(0, diff)
+
+
+def _phase_from_ply(ply_index: int) -> str:
+    """Return phase name for a 0-based ply index."""
+    ply = ply_index + 1
+    if ply <= OPENING_END_PLY:
+        return "opening"
+    if ply <= MIDDLEGAME_END_PLY:
+        return "middlegame"
+    return "endgame"
+
+
+def _compute_game_analytics(game: Game, analysis_result: GameAnalysisResult) -> GameAnalytics:
+    """Compute per-game analytics for caching."""
+    phase_stats = {
+        "opening": {"blunders": 0, "mistakes": 0, "inaccuracies": 0, "total_moves": 0, "cpl_sum": 0, "cpl_count": 0},
+        "middlegame": {"blunders": 0, "mistakes": 0, "inaccuracies": 0, "total_moves": 0, "cpl_sum": 0, "cpl_count": 0},
+        "endgame": {"blunders": 0, "mistakes": 0, "inaccuracies": 0, "total_moves": 0, "cpl_sum": 0, "cpl_count": 0},
+    }
+
+    cpl_buckets = {"0_20": 0, "20_50": 0, "50_100": 0, "100_200": 0, "200_plus": 0, "total": 0}
+
+    overall_cpl_sum = 0
+    overall_cpl_count = 0
+
+    color_stats = {
+        "white": {"cpl_sum": 0, "cpl_count": 0, "blunders": 0, "mistakes": 0, "inaccuracies": 0},
+        "black": {"cpl_sum": 0, "cpl_count": 0, "blunders": 0, "mistakes": 0, "inaccuracies": 0},
+    }
+
+    critical_faced = 0
+    critical_solved = 0
+    critical_failed = 0
+    critical_cpl_sum = 0
+    critical_cpl_count = 0
+
+    for move in analysis_result.moves:
+        player_color = "white" if move.ply_index % 2 == 0 else "black"
+        phase = _phase_from_ply(move.ply_index)
+        classification = move.classification.name.upper()
+
+        cpl = _compute_cpl(player_color, move.eval_best_cp, move.eval_after_cp)
+
+        # Skip book moves for ACPL and CPL distribution
+        if not move.is_book and cpl is not None:
+            overall_cpl_sum += cpl
+            overall_cpl_count += 1
+
+            color_stats[player_color]["cpl_sum"] += cpl
+            color_stats[player_color]["cpl_count"] += 1
+
+            phase_stats[phase]["cpl_sum"] += cpl
+            phase_stats[phase]["cpl_count"] += 1
+
+            cpl_buckets["total"] += 1
+            if cpl <= 20:
+                cpl_buckets["0_20"] += 1
+            elif cpl <= 50:
+                cpl_buckets["20_50"] += 1
+            elif cpl <= 100:
+                cpl_buckets["50_100"] += 1
+            elif cpl <= 200:
+                cpl_buckets["100_200"] += 1
+            else:
+                cpl_buckets["200_plus"] += 1
+
+        # Error counts by phase and color
+        phase_stats[phase]["total_moves"] += 1
+        if classification == "BLUNDER":
+            phase_stats[phase]["blunders"] += 1
+            color_stats[player_color]["blunders"] += 1
+        elif classification == "MISTAKE":
+            phase_stats[phase]["mistakes"] += 1
+            color_stats[player_color]["mistakes"] += 1
+        elif classification == "INACCURACY":
+            phase_stats[phase]["inaccuracies"] += 1
+            color_stats[player_color]["inaccuracies"] += 1
+
+        # Critical positions
+        if move.is_critical:
+            critical_faced += 1
+            if cpl is not None:
+                critical_cpl_sum += cpl
+                critical_cpl_count += 1
+                if cpl == 0:
+                    critical_solved += 1
+                else:
+                    critical_failed += 1
+
+    def _avg(sum_val: int, count_val: int) -> Optional[float]:
+        return (sum_val / count_val) if count_val else None
+
+    analytics = GameAnalytics(
+        game_id=game.id,
+        acpl_overall=_avg(overall_cpl_sum, overall_cpl_count),
+        acpl_opening=_avg(phase_stats["opening"]["cpl_sum"], phase_stats["opening"]["cpl_count"]),
+        acpl_middlegame=_avg(phase_stats["middlegame"]["cpl_sum"], phase_stats["middlegame"]["cpl_count"]),
+        acpl_endgame=_avg(phase_stats["endgame"]["cpl_sum"], phase_stats["endgame"]["cpl_count"]),
+        phase_error_counts=phase_stats,
+        cpl_distribution=cpl_buckets,
+        critical_faced=critical_faced,
+        critical_solved=critical_solved,
+        critical_failed=critical_failed,
+        critical_success_rate=_avg(critical_solved, critical_faced),
+        acpl_critical=_avg(critical_cpl_sum, critical_cpl_count),
+        acpl_white=_avg(color_stats["white"]["cpl_sum"], color_stats["white"]["cpl_count"]),
+        acpl_black=_avg(color_stats["black"]["cpl_sum"], color_stats["black"]["cpl_count"]),
+        blunders_white=color_stats["white"]["blunders"],
+        blunders_black=color_stats["black"]["blunders"],
+        mistakes_white=color_stats["white"]["mistakes"],
+        mistakes_black=color_stats["black"]["mistakes"],
+        inaccuracies_white=color_stats["white"]["inaccuracies"],
+        inaccuracies_black=color_stats["black"]["inaccuracies"],
+    )
+
+    return analytics
