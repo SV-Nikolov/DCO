@@ -255,6 +255,110 @@ class StatisticsScreen(QWidget):
     def _per_game(self, total: int, games: int) -> float:
         return total / games if games else 0.0
 
+    def _build_cpl_svg(self, cpl_buckets: Dict[str, int]) -> str:
+        total = max(1, int(cpl_buckets.get("total", 0)))
+        buckets = [
+            ("0-20", int(cpl_buckets.get("0_20", 0))),
+            ("20-50", int(cpl_buckets.get("20_50", 0))),
+            ("50-100", int(cpl_buckets.get("50_100", 0))),
+            ("100-200", int(cpl_buckets.get("100_200", 0))),
+            ("200+", int(cpl_buckets.get("200_plus", 0))),
+        ]
+        max_pct = max((count / total) for _, count in buckets) if buckets else 0
+        max_pct = max(max_pct, 0.01)
+
+        bars = []
+        labels = []
+        for idx, (label, count) in enumerate(buckets):
+            pct = (count / total) if total else 0
+            height = int(90 * (pct / max_pct))
+            x = 20 + idx * 68
+            y = 110 - height
+            bars.append(
+                f"<rect x='{x}' y='{y}' width='34' height='{height}' rx='6' fill='#0ea5e9'></rect>"
+            )
+            labels.append(
+                f"<text x='{x + 17}' y='130' text-anchor='middle' class='svg-label'>{label}</text>"
+            )
+            labels.append(
+                f"<text x='{x + 17}' y='{y - 6}' text-anchor='middle' class='svg-value'>{pct * 100:.1f}%</text>"
+            )
+
+        return (
+            "<svg viewBox='0 0 380 140' class='chart-svg'>"
+            "<rect x='0' y='0' width='380' height='140' rx='12' fill='#0b1220'/>"
+            "<text x='16' y='22' class='svg-title'>CPL Distribution</text>"
+            + "".join(bars)
+            + "".join(labels)
+            + "</svg>"
+        )
+
+    def _build_phase_svg(self, phase_totals: Dict[str, Dict[str, float]], phase_games: Dict[str, int]) -> str:
+        phases = ["opening", "middlegame", "endgame"]
+        phase_labels = {"opening": "Opening", "middlegame": "Middlegame", "endgame": "Endgame"}
+
+        values = []
+        for phase in phases:
+            games = phase_games.get(phase, 0)
+            blunders = self._per_game(int(phase_totals[phase]["blunders"]), games)
+            mistakes = self._per_game(int(phase_totals[phase]["mistakes"]), games)
+            inaccuracies = self._per_game(int(phase_totals[phase]["inaccuracies"]), games)
+            values.append((blunders, mistakes, inaccuracies))
+
+        max_val = max((sum(v) for v in values), default=1.0)
+        max_val = max(max_val, 0.1)
+
+        bars = []
+        labels = []
+        for idx, phase in enumerate(phases):
+            blunders, mistakes, inaccuracies = values[idx]
+            x = 40 + idx * 110
+            y_base = 130
+
+            b_height = int(80 * (blunders / max_val))
+            m_height = int(80 * (mistakes / max_val))
+            i_height = int(80 * (inaccuracies / max_val))
+
+            y_b = y_base - b_height
+            y_m = y_b - m_height
+            y_i = y_m - i_height
+
+            bars.append(f"<rect x='{x}' y='{y_b}' width='40' height='{b_height}' rx='6' fill='#ef4444'></rect>")
+            bars.append(f"<rect x='{x}' y='{y_m}' width='40' height='{m_height}' rx='6' fill='#f59e0b'></rect>")
+            bars.append(f"<rect x='{x}' y='{y_i}' width='40' height='{i_height}' rx='6' fill='#22c55e'></rect>")
+            labels.append(f"<text x='{x + 20}' y='145' text-anchor='middle' class='svg-label'>{phase_labels[phase]}</text>")
+            labels.append(
+                f"<text x='{x + 20}' y='{y_i - 6}' text-anchor='middle' class='svg-value'>{(blunders + mistakes + inaccuracies):.2f}</text>"
+            )
+
+        return (
+            "<svg viewBox='0 0 380 160' class='chart-svg'>"
+            "<rect x='0' y='0' width='380' height='160' rx='12' fill='#0b1220'/>"
+            "<text x='16' y='22' class='svg-title'>Errors per Game (Phase)</text>"
+            "<text x='260' y='22' class='svg-legend'>Red=Blunders · Amber=Mistakes · Green=Inaccuracies</text>"
+            + "".join(bars)
+            + "".join(labels)
+            + "</svg>"
+        )
+
+    def _build_critical_gauge(self, solved: int, faced: int) -> str:
+        rate = (solved / faced) if faced else 0.0
+        radius = 46
+        circumference = 2 * 3.1416 * radius
+        dash = circumference * rate
+        gap = circumference - dash
+        pct = rate * 100
+
+        return (
+            "<svg viewBox='0 0 140 140' class='gauge-svg'>"
+            "<circle cx='70' cy='70' r='52' fill='#0b1220'/>"
+            "<circle cx='70' cy='70' r='46' fill='none' stroke='#1f2937' stroke-width='10'/>"
+            f"<circle cx='70' cy='70' r='{radius}' fill='none' stroke='#38bdf8' stroke-width='10' stroke-dasharray='{dash:.1f} {gap:.1f}' stroke-linecap='round' transform='rotate(-90 70 70)'/>"
+            f"<text x='70' y='72' text-anchor='middle' class='gauge-value'>{pct:.1f}%</text>"
+            "<text x='70' y='92' text-anchor='middle' class='gauge-label'>Critical</text>"
+            "</svg>"
+        )
+
     def _build_empty_state(self) -> str:
         return (
             "<html><body style='font-family: Trebuchet MS, Verdana, sans-serif; color: #1f2937;'>"
@@ -295,24 +399,38 @@ class StatisticsScreen(QWidget):
 
         cpl_total = max(1, cpl_buckets.get("total", 0))
 
+        cpl_svg = self._build_cpl_svg(cpl_buckets)
+        phase_svg = self._build_phase_svg(phase_totals, phase_games)
+        critical_svg = self._build_critical_gauge(critical_solved, critical_faced)
+
         html = f"""
         <html>
         <head>
             <style>
+                :root {{
+                    --ink: #0f172a;
+                    --muted: #64748b;
+                    --card: #ffffff;
+                    --line: #e2e8f0;
+                    --accent: #38bdf8;
+                    --deep: #0b1220;
+                    --glow: rgba(14, 165, 233, 0.15);
+                }}
                 body {{
                     font-family: Trebuchet MS, Verdana, sans-serif;
-                    background: #f8fafc;
-                    color: #0f172a;
+                    background: radial-gradient(circle at top left, #e2e8f0 0%, #f8fafc 42%, #f1f5f9 100%);
+                    color: var(--ink);
                 }}
                 .wrap {{
                     padding: 12px 8px 24px 8px;
                 }}
                 .hero {{
-                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                    background: linear-gradient(135deg, #0b1220 0%, #1f2937 100%);
                     color: #f8fafc;
                     border-radius: 16px;
                     padding: 20px 22px;
                     margin-bottom: 18px;
+                    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
                 }}
                 .hero h2 {{
                     margin: 0 0 6px 0;
@@ -328,18 +446,18 @@ class StatisticsScreen(QWidget):
                     gap: 14px;
                 }}
                 .card {{
-                    background: #ffffff;
+                    background: var(--card);
                     border-radius: 14px;
                     padding: 14px 16px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+                    border: 1px solid var(--line);
+                    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
                 }}
                 .card h3 {{
                     margin: 0 0 6px 0;
                     font-size: 14px;
                     text-transform: uppercase;
                     letter-spacing: 0.08em;
-                    color: #64748b;
+                    color: var(--muted);
                 }}
                 .big {{
                     font-size: 26px;
@@ -347,7 +465,7 @@ class StatisticsScreen(QWidget):
                     margin: 0;
                 }}
                 .subtle {{
-                    color: #64748b;
+                    color: var(--muted);
                     font-size: 12px;
                 }}
                 .row {{
@@ -358,33 +476,81 @@ class StatisticsScreen(QWidget):
                 }}
                 .bar {{
                     height: 8px;
-                    background: #e2e8f0;
+                    background: var(--line);
                     border-radius: 8px;
                     overflow: hidden;
                 }}
                 .bar > span {{
                     display: block;
                     height: 100%;
-                    background: #0ea5e9;
+                    background: var(--accent);
                 }}
                 .tag {{
                     display: inline-block;
                     padding: 2px 8px;
                     border-radius: 999px;
                     font-size: 11px;
-                    background: #e2e8f0;
-                    color: #0f172a;
+                    background: var(--line);
+                    color: var(--ink);
                     margin-left: 6px;
                 }}
                 .section-title {{
                     margin: 18px 0 8px 0;
                     font-size: 15px;
-                    color: #0f172a;
+                    color: var(--ink);
                 }}
                 .split {{
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     gap: 12px;
+                }}
+                .chart-row {{
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 14px;
+                    margin-bottom: 14px;
+                }}
+                .chart-card {{
+                    background: var(--card);
+                    border-radius: 16px;
+                    padding: 12px;
+                    border: 1px solid var(--line);
+                    box-shadow: 0 12px 30px var(--glow);
+                }}
+                .chart-svg {{
+                    width: 100%;
+                    height: auto;
+                }}
+                .svg-title {{
+                    font-size: 12px;
+                    fill: #94a3b8;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                }}
+                .svg-label {{
+                    font-size: 10px;
+                    fill: #cbd5f5;
+                }}
+                .svg-value {{
+                    font-size: 10px;
+                    fill: #e2e8f0;
+                }}
+                .svg-legend {{
+                    font-size: 9px;
+                    fill: #64748b;
+                }}
+                .gauge-svg {{
+                    width: 100%;
+                    height: auto;
+                }}
+                .gauge-value {{
+                    font-size: 18px;
+                    fill: #f8fafc;
+                    font-weight: 700;
+                }}
+                .gauge-label {{
+                    font-size: 10px;
+                    fill: #94a3b8;
                 }}
             </style>
         </head>
@@ -417,6 +583,13 @@ class StatisticsScreen(QWidget):
                         <p class="subtle">Aggregate performance</p>
                     </div>
                 </div>
+
+                <h4 class="section-title">Performance Visuals</h4>
+                <div class="chart-row">
+                    <div class="chart-card">{phase_svg}</div>
+                    <div class="chart-card">{critical_svg}</div>
+                </div>
+                <div class="chart-card">{cpl_svg}</div>
 
                 <h4 class="section-title">Error Diagnostics by Phase</h4>
                 <div class="grid">
@@ -452,20 +625,6 @@ class StatisticsScreen(QWidget):
                         <div class="row"><span>Failed</span><span>{critical_failed}</span></div>
                         <p class="subtle">ACPL in critical: {fmt(acpl_critical, 1)}</p>
                     </div>
-                </div>
-
-                <h4 class="section-title">CPL Distribution</h4>
-                <div class="card">
-                    <div class="row"><span>0-20</span><span>{pct(cpl_buckets["0_20"], cpl_total)}%</span></div>
-                    <div class="bar"><span style="width: {pct(cpl_buckets["0_20"], cpl_total)}%"></span></div>
-                    <div class="row"><span>20-50</span><span>{pct(cpl_buckets["20_50"], cpl_total)}%</span></div>
-                    <div class="bar"><span style="width: {pct(cpl_buckets["20_50"], cpl_total)}%"></span></div>
-                    <div class="row"><span>50-100</span><span>{pct(cpl_buckets["50_100"], cpl_total)}%</span></div>
-                    <div class="bar"><span style="width: {pct(cpl_buckets["50_100"], cpl_total)}%"></span></div>
-                    <div class="row"><span>100-200</span><span>{pct(cpl_buckets["100_200"], cpl_total)}%</span></div>
-                    <div class="bar"><span style="width: {pct(cpl_buckets["100_200"], cpl_total)}%"></span></div>
-                    <div class="row"><span>200+</span><span>{pct(cpl_buckets["200_plus"], cpl_total)}%</span></div>
-                    <div class="bar"><span style="width: {pct(cpl_buckets["200_plus"], cpl_total)}%"></span></div>
                 </div>
 
                 <h4 class="section-title">Color Bias</h4>
