@@ -131,6 +131,11 @@ class PuzzleScreen(QWidget):
         # Action buttons
         settings_layout.addSpacing(20)
 
+        self.retry_btn = QPushButton("Retry Puzzle")
+        self.retry_btn.setObjectName("secondaryButton")
+        self.retry_btn.clicked.connect(self._on_retry)
+        settings_layout.addWidget(self.retry_btn)
+
         self.skip_btn = QPushButton("Skip Puzzle")
         self.skip_btn.setObjectName("secondaryButton")
         self.skip_btn.clicked.connect(self._on_skip)
@@ -215,12 +220,23 @@ class PuzzleScreen(QWidget):
             # Setup board
             self.current_board = chess.Board(self.current_puzzle.fen)
             self.solution_moves = self.current_puzzle.solution_line
+            self.initial_fen = self.current_puzzle.fen  # Store initial position for retry
+
+            # Flip board if playing as black
+            is_black_to_move = self.current_board.turn == chess.BLACK
+            self.board_widget.set_flipped(is_black_to_move)
 
             # Update UI
             theme_name = self.current_puzzle.theme.value.capitalize() if self.current_puzzle.theme else "Unknown"
-            self.puzzle_info.setText(f"{theme_name} • Rating: {self.current_puzzle.rating}")
+            side = "Black" if is_black_to_move else "White"
+            self.puzzle_info.setText(f"{theme_name} • Rating: {self.current_puzzle.rating} • Playing as {side}")
             self.hint_label.setText("")
             self.status_label.setText("")
+            self.hint_btn.setEnabled(True)
+
+            # Clear any selected square
+            if hasattr(self, "_selected_square"):
+                delattr(self, "_selected_square")
 
             self._update_board_display()
 
@@ -234,11 +250,12 @@ class PuzzleScreen(QWidget):
         """Update the board display."""
         if self.current_board and self.board_widget:
             self.board_widget.set_board(self.current_board)
+            self.board_widget.clear_arrows()
             # Highlight last move if available
             if self.move_index > 0 and self.solution_moves:
                 move_uci = self.solution_moves[self.move_index - 1]
                 move = chess.Move.from_uci(move_uci)
-                self.board_widget.highlight_move(move)
+                self.board_widget.set_last_move(move)
 
     def _on_square_clicked(self, square: int) -> None:
         """Handle board square clicks for move input."""
@@ -247,13 +264,26 @@ class PuzzleScreen(QWidget):
 
         if not hasattr(self, "_selected_square"):
             self._selected_square = square
+            # Highlight selected square
+            self.board_widget.highlight_squares([square])
         else:
             from_square = self._selected_square
             to_square = square
+            
+            # Clear selection
+            delattr(self, "_selected_square")
+            self.board_widget.highlight_squares([])
 
             try:
                 # Try to construct move
                 move = chess.Move(from_square, to_square)
+                
+                # Check for promotion
+                if self.current_board.piece_at(from_square) and \
+                   self.current_board.piece_at(from_square).piece_type == chess.PAWN:
+                    if (chess.square_rank(to_square) == 7 and self.current_board.turn == chess.WHITE) or \
+                       (chess.square_rank(to_square) == 0 and self.current_board.turn == chess.BLACK):
+                        move = chess.Move(from_square, to_square, promotion=chess.QUEEN)
 
                 # Check if it's a legal move
                 if move in self.current_board.legal_moves:
@@ -271,14 +301,17 @@ class PuzzleScreen(QWidget):
                         if self.move_index >= len(self.solution_moves):
                             # Puzzle complete
                             self._on_puzzle_complete()
+                        else:
+                            # Re-enable hint for next move
+                            self.hint_btn.setEnabled(True)
                     else:
                         # Wrong move
                         self.status_label.setText("✗ Wrong move. Try again.")
+                else:
+                    self.status_label.setText("✗ Illegal move.")
 
             except ValueError:
                 pass
-
-            delattr(self, "_selected_square")
 
     def _on_show_hint(self) -> None:
         """Show hint for current puzzle."""
@@ -289,7 +322,13 @@ class PuzzleScreen(QWidget):
         move = chess.Move.from_uci(solution_uci)
         san = self.current_board.san(move)
 
+        # Show text hint
         self.hint_label.setText(f"Next move: {san}")
+        
+        # Show green arrow on board
+        self.board_widget.clear_arrows()
+        self.board_widget.add_arrow(move.from_square, move.to_square, "green")
+        
         self.hints_used += 1
         self.hint_btn.setEnabled(False)
 
@@ -309,6 +348,27 @@ class PuzzleScreen(QWidget):
 
         # Load next puzzle after delay
         QTimer.singleShot(2000, self.load_next_puzzle)
+
+    def _on_retry(self) -> None:
+        """Retry current puzzle from the beginning."""
+        if not self.current_puzzle:
+            return
+        
+        # Reset to initial position
+        self.current_board = chess.Board(self.initial_fen)
+        self.move_index = 0
+        self.hints_used = 0
+        
+        # Clear UI
+        self.hint_label.setText("")
+        self.status_label.setText("Puzzle reset. Try again!")
+        self.hint_btn.setEnabled(True)
+        
+        # Clear any selected square
+        if hasattr(self, "_selected_square"):
+            delattr(self, "_selected_square")
+        
+        self._update_board_display()
 
     def _on_skip(self) -> None:
         """Skip current puzzle."""
