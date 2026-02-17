@@ -31,6 +31,9 @@ class SettingsScreen(QWidget):
         self.current_light_color = self.settings.get_board_light_color()
         self.current_dark_color = self.settings.get_board_dark_color()
         
+        # Track if settings have unsaved changes
+        self.has_unsaved_changes = False
+        
         self.init_ui()
         self.load_settings()
     
@@ -51,32 +54,8 @@ class SettingsScreen(QWidget):
         subtitle.setStyleSheet("font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(subtitle)
         
-        # Tab widget
+        # Tab widget (styled by global stylesheet)
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                background: white;
-                padding: 20px;
-            }
-            QTabBar::tab {
-                padding: 10px 20px;
-                margin-right: 2px;
-                background: #f3f4f6;
-                border: 1px solid #e5e7eb;
-                border-bottom: none;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom: 1px solid white;
-            }
-            QTabBar::tab:hover {
-                background: #e5e7eb;
-            }
-        """)
         
         # Create tabs
         self.tabs.addTab(self._create_engine_tab(), "Engine")
@@ -160,6 +139,10 @@ class SettingsScreen(QWidget):
         button_layout.addWidget(save_btn)
         
         layout.addLayout(button_layout)
+    
+    def _mark_settings_changed(self):
+        """Mark settings as having unsaved changes."""
+        self.has_unsaved_changes = True
     
     def _create_engine_tab(self) -> QWidget:
         """Create engine settings tab."""
@@ -627,6 +610,31 @@ class SettingsScreen(QWidget):
         self.username_edit.setText(self.settings.get_username())
         self.auto_dedupe.setChecked(self.settings.get_import_auto_dedupe())
         self.default_time_control.setCurrentText(self.settings.get_default_time_control())
+        
+        # Clear unsaved changes flag after loading
+        self.has_unsaved_changes = False
+        
+        # Connect all widgets to mark changes
+        self.engine_path_edit.textChanged.connect(self._mark_settings_changed)
+        self.engine_threads.valueChanged.connect(self._mark_settings_changed)
+        self.engine_hash.valueChanged.connect(self._mark_settings_changed)
+        self.engine_depth.valueChanged.connect(self._mark_settings_changed)
+        self.engine_time.valueChanged.connect(self._mark_settings_changed)
+        self.auto_analyze.stateChanged.connect(self._mark_settings_changed)
+        self.add_to_practice.stateChanged.connect(self._mark_settings_changed)
+        self.threshold_excellent.valueChanged.connect(self._mark_settings_changed)
+        self.threshold_good.valueChanged.connect(self._mark_settings_changed)
+        self.threshold_inaccuracy.valueChanged.connect(self._mark_settings_changed)
+        self.threshold_mistake.valueChanged.connect(self._mark_settings_changed)
+        self.practice_difficulty.currentIndexChanged.connect(self._mark_settings_changed)
+        self.practice_spaced_repetition.stateChanged.connect(self._mark_settings_changed)
+        self.practice_offset.valueChanged.connect(self._mark_settings_changed)
+        self.practice_session_length.valueChanged.connect(self._mark_settings_changed)
+        self.theme_combo.currentIndexChanged.connect(self._mark_settings_changed)
+        self.show_coordinates.stateChanged.connect(self._mark_settings_changed)
+        self.username_edit.textChanged.connect(self._mark_settings_changed)
+        self.auto_dedupe.stateChanged.connect(self._mark_settings_changed)
+        self.default_time_control.currentIndexChanged.connect(self._mark_settings_changed)
     
     def _on_save(self):
         """Save UI settings to storage."""
@@ -666,9 +674,12 @@ class SettingsScreen(QWidget):
         # Sync to disk
         self.settings.sync()
         
+        # Clear unsaved changes flag
+        self.has_unsaved_changes = False
+        
         # Show confirmation
         message = "Your settings have been saved successfully."
-        message += "\\n\\nTheme and board color changes will take effect when you restart the application or open a new board."
+        message += "\n\nTheme and board color changes will take effect when you restart the application or open a new board."
         
         QMessageBox.information(
             self,
@@ -700,13 +711,28 @@ class SettingsScreen(QWidget):
     
     def _on_restart(self):
         """Restart the application to apply settings changes."""
+        # Check for unsaved changes
+        if self.has_unsaved_changes:
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "You have unsaved changes. Do you want to save them before restarting?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                QMessageBox.Save
+            )
+            
+            if reply == QMessageBox.Cancel:
+                return
+            elif reply == QMessageBox.Save:
+                self._on_save()
+        
+        # Confirm restart
         reply = QMessageBox.question(
             self,
             "Restart Application",
-            "Do you want to restart DCO now to apply all settings?\n\n"
-            "Make sure to save any unsaved changes before restarting.",
+            "Do you want to restart DCO now?",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.Yes
         )
         
         if reply == QMessageBox.Yes:

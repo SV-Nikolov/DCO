@@ -8,10 +8,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
-from PySide6.QtCore import Qt, QDate
+from PySide6.QtCore import Qt, QDate, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QDateEdit, QFrame, QGridLayout
+    QPushButton, QDateEdit, QFrame, QGridLayout, QGraphicsOpacityEffect
 )
 
 from matplotlib.figure import Figure
@@ -21,6 +21,152 @@ from sqlalchemy import func
 
 from ...data.db import Database
 from ...data.models import Game, Analysis, Move, MoveClassification
+
+
+class StatCarousel(QFrame):
+    """Carousel widget for displaying statistics one at a time with navigation."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("cardFrame")
+        self.current_index = 0
+        self.stats = []  # List of (label, value) tuples
+        self.animating = False
+        
+        # Main layout
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(20, 30, 20, 30)
+        layout.setSpacing(20)
+        
+        # Left arrow button
+        self.left_btn = QPushButton("◀")
+        self.left_btn.setFixedSize(40, 40)
+        self.left_btn.clicked.connect(self._previous_stat)
+        self.left_btn.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(self.left_btn)
+        
+        # Stat display area
+        stat_widget = QWidget()
+        stat_layout = QVBoxLayout(stat_widget)
+        stat_layout.setContentsMargins(20, 10, 20, 10)
+        stat_layout.setSpacing(10)
+        stat_layout.setAlignment(Qt.AlignCenter)
+        
+        self.label = QLabel("")
+        self.label.setObjectName("statLabel")
+        self.label.setAlignment(Qt.AlignCenter)
+        stat_layout.addWidget(self.label)
+        
+        self.value = QLabel("0")
+        self.value.setObjectName("statValue")
+        self.value.setAlignment(Qt.AlignCenter)
+        stat_layout.addWidget(self.value)
+        
+        # Indicator dots
+        self.dots_layout = QHBoxLayout()
+        self.dots_layout.setSpacing(8)
+        self.dots_layout.setAlignment(Qt.AlignCenter)
+        stat_layout.addLayout(self.dots_layout)
+        
+        self.dots = []
+        
+        layout.addWidget(stat_widget, 1)
+        
+        # Right arrow button
+        self.right_btn = QPushButton("▶")
+        self.right_btn.setFixedSize(40, 40)
+        self.right_btn.clicked.connect(self._next_stat)
+        self.right_btn.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(self.right_btn)
+        
+        # Opacity effect for fade animation
+        self.opacity_effect = QGraphicsOpacityEffect()
+        stat_widget.setGraphicsEffect(self.opacity_effect)
+        
+    def set_stats(self, stats: List[Tuple[str, str]]):
+        """Set the statistics to display."""
+        self.stats = stats
+        self.current_index = 0
+        
+        # Create indicator dots
+        for dot in self.dots:
+            dot.deleteLater()
+        self.dots.clear()
+        
+        for i in range(len(stats)):
+            dot = QLabel("●")
+            dot.setStyleSheet("color: #64748b; font-size: 12px;")
+            dot.setAlignment(Qt.AlignCenter)
+            self.dots_layout.addWidget(dot)
+            self.dots.append(dot)
+        
+        self._update_display()
+    
+    def _update_display(self):
+        """Update the displayed statistic."""
+        if not self.stats:
+            return
+        
+        label_text, value_text = self.stats[self.current_index]
+        self.label.setText(label_text)
+        self.value.setText(value_text)
+        
+        # Update dots
+        for i, dot in enumerate(self.dots):
+            if i == self.current_index:
+                dot.setStyleSheet("color: #3b82f6; font-size: 14px;")
+            else:
+                dot.setStyleSheet("color: #64748b; font-size: 12px;")
+        
+        # Update button states
+        self.left_btn.setEnabled(self.current_index > 0)
+        self.right_btn.setEnabled(self.current_index < len(self.stats) - 1)
+    
+    def _animate_transition(self):
+        """Animate the transition with fade effect."""
+        if self.animating:
+            return
+        
+        self.animating = True
+        
+        # Fade out
+        fade_out = QPropertyAnimation(self.opacity_effect, b"opacity")
+        fade_out.setDuration(200)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.setEasingCurve(QEasingCurve.InOutQuad)
+        
+        # Fade in
+        fade_in = QPropertyAnimation(self.opacity_effect, b"opacity")
+        fade_in.setDuration(200)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        fade_in.setEasingCurve(QEasingCurve.InOutQuad)
+        
+        # Update display in the middle
+        def on_fade_out_finished():
+            self._update_display()
+            fade_in.start()
+        
+        def on_fade_in_finished():
+            self.animating = False
+        
+        fade_out.finished.connect(on_fade_out_finished)
+        fade_in.finished.connect(on_fade_in_finished)
+        
+        fade_out.start()
+    
+    def _next_stat(self):
+        """Show next statistic."""
+        if self.current_index < len(self.stats) - 1:
+            self.current_index += 1
+            self._animate_transition()
+    
+    def _previous_stat(self):
+        """Show previous statistic."""
+        if self.current_index > 0:
+            self.current_index -= 1
+            self._animate_transition()
 
 
 class StatisticsScreen(QWidget):
@@ -88,23 +234,9 @@ class StatisticsScreen(QWidget):
         controls_layout.addStretch()
         layout.addWidget(controls)
 
-        summary = QFrame()
-        summary.setObjectName("cardFrame")
-        summary_layout = QHBoxLayout(summary)
-        summary_layout.setContentsMargins(15, 10, 15, 10)
-        summary_layout.setSpacing(20)
-
-        self.games_label = QLabel("Games Analyzed: 0")
-        self.accuracy_label = QLabel("Average Accuracy: 0%")
-        self.elo_label = QLabel("Estimated Elo: 0")
-        self.blunders_label = QLabel("Avg Blunders/Game: 0.0")
-
-        summary_layout.addWidget(self.games_label)
-        summary_layout.addWidget(self.accuracy_label)
-        summary_layout.addWidget(self.elo_label)
-        summary_layout.addWidget(self.blunders_label)
-        summary_layout.addStretch()
-        layout.addWidget(summary)
+        # Statistics carousel
+        self.stat_carousel = StatCarousel()
+        layout.addWidget(self.stat_carousel)
 
         charts = QFrame()
         charts_layout = QGridLayout(charts)
@@ -196,18 +328,20 @@ class StatisticsScreen(QWidget):
             avg_accuracy = int(sum(accuracies) / total_games) if total_games else 0
             avg_elo = int(sum(elos) / total_games) if total_games else 0
             
-            # Update summary labels
-            self.games_label.setText(f"Games Analyzed: {total_games}")
-            self.accuracy_label.setText(f"Average Accuracy: {avg_accuracy}%")
-            self.elo_label.setText(f"Estimated Elo: {avg_elo}")
-
             blunders_per_game = 0.0
             blunder_counts = []
             if game_ids:
                 blunder_counts = self._blunder_counts(session, game_ids)
                 blunders_per_game = sum(blunder_counts) / len(blunder_counts) if blunder_counts else 0.0
             
-            self.blunders_label.setText(f"Avg Blunders/Game: {blunders_per_game:.1f}")
+            # Update carousel with statistics
+            stats = [
+                ("GAMES ANALYZED", str(total_games)),
+                ("AVERAGE ACCURACY", f"{avg_accuracy}%"),
+                ("ESTIMATED ELO", str(avg_elo)),
+                ("AVG BLUNDERS/GAME", f"{blunders_per_game:.1f}")
+            ]
+            self.stat_carousel.set_stats(stats)
 
             # Charts
             self._plot_line(self.accuracy_ax, "Accuracy Over Time", dates, accuracies, 0, 100)

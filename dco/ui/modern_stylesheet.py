@@ -951,26 +951,29 @@ QTabWidget::pane {
     border: 1px solid #334155;
     border-radius: 6px;
     background-color: #1e293b;
+    padding: 20px;
 }
 
 QTabBar::tab {
     background-color: #0f172a;
-    color: #94a3b8;
-    padding: 8px 16px;
+    color: #e2e8f0;
+    padding: 10px 20px;
     border: 1px solid #334155;
     border-bottom: none;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
+    font-weight: 500;
 }
 
 QTabBar::tab:selected {
     background-color: #1e293b;
-    color: #f1f5f9;
+    color: #ffffff;
     border-bottom: 1px solid #1e293b;
 }
 
 QTabBar::tab:hover {
     background-color: #334155;
+    color: #f1f5f9;
 }
 
 /* =================================================================
@@ -991,6 +994,63 @@ QLabel#appTitle {
     font-weight: bold;
     padding: 20px;
     color: #f1f5f9;
+}
+
+QLabel#screenTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+QLabel#cardTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+QLabel#sectionTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+QLabel#statValue {
+    font-size: 32px;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+QLabel#statLabel {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+QLabel#mutedText {
+    color: #94a3b8;
+}
+
+QLabel#placeholderText {
+    font-size: 16px;
+    color: #64748b;
+}
+
+/* =================================================================
+   FRAMES & CARDS - DARK THEME
+   ================================================================= */
+
+QFrame#cardFrame {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+}
+
+QFrame#statCard {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
 }
 """
 

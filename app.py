@@ -7,8 +7,8 @@ A desktop application for chess training and improvement based on your own past 
 import sys
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import Qt, QSharedMemory
 
 from dco.ui.main_window import MainWindow
 from dco.ui.modern_stylesheet import load_stylesheet
@@ -22,6 +22,16 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Daily Chess Offline")
     app.setOrganizationName("DCO")
+    
+    # Check for existing instance
+    shared_memory = QSharedMemory("DCO_SingleInstance")
+    if not shared_memory.create(1):
+        QMessageBox.warning(
+            None,
+            "Application Already Running",
+            "Daily Chess Offline is already running. Only one instance can run at a time."
+        )
+        return 1
     
     # Load theme from settings and apply stylesheet
     settings = get_settings()
