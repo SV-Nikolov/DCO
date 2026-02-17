@@ -5,6 +5,7 @@ Generates practice items and updates spaced repetition progress.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 import random
@@ -24,6 +25,8 @@ from ..data.models import (
 
 DEFAULT_OFFSET_PLIES = 2
 DEFAULT_TARGET_LINE_PLIES = 1
+
+logger = logging.getLogger(__name__)
 
 
 def generate_practice_items(
@@ -277,7 +280,8 @@ def _build_target_line(
             san_moves.append(temp_board.san(move))
             uci_moves.append(move.uci())
             temp_board.push(move)
-        except Exception:
+        except (chess.IllegalMoveError, ValueError) as e:
+            logger.debug(f"Stopping PV parsing due to illegal move: {e}")
             break
 
     return uci_moves, san_moves

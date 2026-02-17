@@ -11,6 +11,8 @@ import chess
 import chess.svg
 from typing import Optional, List
 
+from ...core.settings import get_settings
+
 
 class ChessboardWidget(QWidget):
     """Interactive chessboard widget using SVG rendering."""
@@ -37,7 +39,6 @@ class ChessboardWidget(QWidget):
         self.setMaximumSize(size, size)
         
         # Load board colors from settings
-        from ...core.settings import get_settings
         settings = get_settings()
         self.light_square_color = settings.get_board_light_color()
         self.dark_square_color = settings.get_board_dark_color()
