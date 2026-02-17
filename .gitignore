@@ -35,9 +35,12 @@ ENV/
 # Database
 *.db
 *.sqlite3
+/data/db/*.db
 
-# Logs
+# Logs and Debug Files
 *.log
+/logs/debug_*.txt
+/logs/*.log
 
 # OS
 .DS_Store

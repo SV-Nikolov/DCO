@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Support
+    url: https://github.com/SV-Nikolov/DCO/discussions
+    about: Ask a question or get support
+  - name: Documentation
+    url: https://github.com/SV-Nikolov/DCO/tree/main/docs
+    about: Read the comprehensive documentation
+  - name: Stockfish Issues
+    url: https://github.com/official-stockfish/Stockfish/issues
+    about: Issues with Stockfish engine (not DCO)

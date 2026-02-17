@@ -1,67 +1,81 @@
-# Daily Chess Offline (DCO)
+﻿# Daily Chess Offline (DCO)
 
-A desktop Python application for chess training and improvement based on your own past mistakes.
+A powerful desktop application for chess training and improvement based on your own past mistakes. Learn from your games, practice with personalized puzzles, and play against Stockfish.
 
-## Features
+##  Quick Start
 
-- **Play vs Computer**: Offline chess engine with adjustable strength (1000-3200 Elo)
-- **Import & Analyze**: Import Chess.com games (PGN) and analyze them locally
-- **Game Database**: Searchable game library with statistics
-- **Practice Mode**: Auto-generated training from your blunders and mistakes
-- **Puzzles**: Offline puzzle sets and puzzles generated from your games
-- **Statistics Dashboard**: Track your progress with accuracy and performance metrics
+For complete setup instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md).
 
-## Installation
+\\\ash
+# Clone the repository
+git clone https://github.com/SV-Nikolov/DCO.git
+cd DCO
 
-### 1. Install Python Dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Install Stockfish Chess Engine
+# Download Stockfish (required for play and analysis features)
+# See: docs/INSTALL_STOCKFISH.md
 
-**DCO requires Stockfish to analyze games.**
-
-**Quick Install (Windows)**:
-1. Download Stockfish: https://stockfishchess.org/download/
-2. Extract the ZIP file
-3. Copy `stockfish.exe` to the DCO directory (`C:\Source\DCO\`)
-4. Done!
-
-For detailed instructions, see [INSTALL_STOCKFISH.md](INSTALL_STOCKFISH.md)
-
-### 3. Run the Application
-
-```bash
+# Run the application
 python app.py
-```
+\\\
 
-## Requirements
+##  Repository Structure
 
-- Python >= 3.11 (Python 3.13+ recommended)
-- Stockfish chess engine (see installation instructions above)
+All files are organized following GitHub best practices:
 
-## Project Structure
+- **dco/** - Source code
+- **docs/** - Complete documentation (QUICKSTART, SETUP, TROUBLESHOOTING, etc.)
+- **scripts/** - Utility scripts (build, database, etc.)
+- **tests/** - Test suite
+- **data/db/** - Application databases (generated at runtime)
+- **logs/** - Log files and progress tracking
+- **.github/** - GitHub configuration and templates
 
-```
-dco/
-├── app.py                 # Main entry point
-├── ui/                    # UI layer
-│   ├── main_window.py
-│   ├── screens/          # Individual screens
-│   └── widgets/          # Reusable UI components
-├── core/                 # Core chess logic
-│   ├── engine.py
-│   ├── analysis.py
-│   └── classification.py
-├── practice/             # Practice mode logic
-├── puzzles/              # Puzzle system
-└── data/                 # Database layer
-    ├── db.py
-    └── models.py
-```
+See [DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md) for detailed file organization.
 
-## License
+##  Documentation
 
-See LICENSE file.
+Start here:
+-  **[QUICKSTART.md](docs/QUICKSTART.md)** - Install and run in 5 minutes
+-  **[SETUP.md](docs/SETUP.md)** - Development environment setup
+-  **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues
+-  **[INSTALL_STOCKFISH.md](docs/INSTALL_STOCKFISH.md)** - Engine installation
+-  **[UI_DESIGN_SYSTEM.md](docs/UI_DESIGN_SYSTEM.md)** - Design specs
+-  **[guides/DEVELOPERS.md](docs/guides/DEVELOPERS.md)** - Developer guide
+
+##  Features
+
+- **Learn from Mistakes** - Import your games and get instant analysis
+- **Personalized Practice** - Auto-generated puzzles from your actual positions
+- **Play vs Stockfish** - Adjustable difficulty (1000-2800 Elo)
+- **Game Analysis** - Deep analysis with principal variations
+- **Puzzle Library** - Unlimited practice material
+- **Dark Mode** - Modern, eye-friendly UI
+- **Game Database** - Searchable library with statistics
+
+##  Requirements
+
+- Python 3.8+
+- PySide6
+- python-chess
+- Stockfish engine (download separately)
+
+##  Project Status
+
+- [logs/PROGRESS.md](logs/PROGRESS.md) - Development progress
+- [logs/AI_STATE.md](logs/AI_STATE.md) - AI integration status
+- [docs/planning/](docs/planning/) - Planning documents
+
+##  License
+
+MIT License - See [LICENSE](LICENSE)
+
+##  Contributing
+
+See [docs/guides/DEVELOPERS.md](docs/guides/DEVELOPERS.md)
+
+---
+
+**Repository**: https://github.com/SV-Nikolov/DCO
