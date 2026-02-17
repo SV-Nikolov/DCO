@@ -298,12 +298,12 @@ class PuzzleScreen(QWidget):
                         self.status_label.setText("✓ Correct!")
                         self._update_board_display()
 
+                        # Check if puzzle is complete
                         if self.move_index >= len(self.solution_moves):
-                            # Puzzle complete
                             self._on_puzzle_complete()
                         else:
-                            # Re-enable hint for next move
-                            self.hint_btn.setEnabled(True)
+                            # Play opponent's automatic response (if this was the user's move)
+                            QTimer.singleShot(500, self._play_opponent_move)
                     else:
                         # Wrong move
                         self.status_label.setText("✗ Wrong move. Try again.")
@@ -348,6 +348,27 @@ class PuzzleScreen(QWidget):
 
         # Load next puzzle after delay
         QTimer.singleShot(2000, self.load_next_puzzle)
+
+    def _play_opponent_move(self) -> None:
+        """Automatically play the opponent's response move."""
+        if not self.current_puzzle or self.move_index >= len(self.solution_moves):
+            return
+        
+        # Play opponent's move
+        opponent_move_uci = self.solution_moves[self.move_index]
+        opponent_move = chess.Move.from_uci(opponent_move_uci)
+        self.current_board.push(opponent_move)
+        self.move_index += 1
+        
+        self._update_board_display()
+        
+        # Check if puzzle is complete after opponent's move
+        if self.move_index >= len(self.solution_moves):
+            self._on_puzzle_complete()
+        else:
+            # Re-enable hint for user's next move
+            self.hint_btn.setEnabled(True)
+            self.status_label.setText("Your turn...")
 
     def _on_retry(self) -> None:
         """Retry current puzzle from the beginning."""

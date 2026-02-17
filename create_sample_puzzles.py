@@ -14,56 +14,56 @@ def create_sample_puzzles():
     sample_puzzles = [
         {
             "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
-            "solution": ["h5f7"],  # Scholar's mate pattern
+            "solution": ["h5f7"],  # Qxf7# - Checkmate in one
             "theme": PuzzleTheme.MATE,
             "rating": 800,
             "source": "sample"
         },
         {
             "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 2 5",
-            "solution": ["c4f7", "e8f7", "d1d5"],  # Fork king and rook
+            "solution": ["c4f7", "e8f7", "d1d5"],  # Bxf7+ Kxf7 Qd5+ forking king and rook
             "theme": PuzzleTheme.TACTIC,
             "rating": 1200,
             "source": "sample"
         },
         {
             "fen": "r1bqkb1r/pppppppp/2n2n2/8/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq - 1 3",
-            "solution": ["f6e4"],  # Win pawn
+            "solution": ["f6e4"],  # Nxe4 - Win center pawn
             "theme": PuzzleTheme.MATERIAL,
             "rating": 1000,
             "source": "sample"
         },
         {
-            "fen": "6k1/5ppp/8/8/8/6PP/5PK1/8 w - - 0 1",
-            "solution": ["g2f3", "g8f7", "f3e4"],  # King endgame technique
-            "theme": PuzzleTheme.ENDGAME,
+            "fen": "r2qkb1r/ppp2ppp/2n5/3pP3/2Bn4/5N2/PPP2PPP/RNBQK2R w KQkq - 0 7",
+            "solution": ["d1d5"],  # Qd5 - Forking knight on e4 and bishop on c5
+            "theme": PuzzleTheme.TACTIC,
             "rating": 1400,
             "source": "sample"
         },
         {
             "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2BPP3/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5",
-            "solution": ["c6d4", "f3d4", "c5f2"],  # Italian Game trap
+            "solution": ["c6d4", "f3d4", "c5f2"],  # Nd4! Nxd4 Bxf2+ winning the exchange
             "theme": PuzzleTheme.TACTIC,
             "rating": 1500,
             "source": "sample"
         },
         {
             "fen": "r2qkb1r/ppp2ppp/2np1n2/4p3/2B1P1b1/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 1 6",
-            "solution": ["c4f7", "e8f7", "f3e5", "f7e7", "e5g4"],  # Win material
+            "solution": ["c4f7", "e8f7", "f3e5", "f7e8", "e5g4"],  # Bxf7+ Kxf7 Ne5+ Ke8 Nxg4 winning bishop
             "theme": PuzzleTheme.MATERIAL,
             "rating": 1600,
             "source": "sample"
         },
         {
-            "fen": "6k1/5p1p/4p1p1/3pP3/1ppP4/1P3P2/2P3PP/6K1 w - - 0 1",
-            "solution": ["f3f4", "c4c3", "g2g4"],  # Pawn endgame
-            "theme": PuzzleTheme.ENDGAME,
+            "fen": "r1bqk2r/pppp1ppp/2n2n2/2b5/2BpP3/5N2/PPP2PPP/RNBQ1RK1 w kq - 0 6",
+            "solution": ["c4f7", "e8f7", "f3g5", "f7e8", "d1h5"],  # Bxf7+ Kxf7 Ng5+ Ke8 Qh5+ winning
+            "theme": PuzzleTheme.MATE,
             "rating": 1700,
             "source": "sample"
         },
         {
             "fen": "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
-            "solution": ["c6d4"],  # Center fork trick
+            "solution": ["c6d4"],  # Nd4 - Center fork trick attacking queen and bishop
             "theme": PuzzleTheme.TACTIC,
             "rating": 1300,
             "source": "sample"
