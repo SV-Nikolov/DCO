@@ -841,8 +841,10 @@ class PlayScreen(QWidget):
         super().__init__(parent)
         self.db = db
         
-        # Initialize engine (but don't start it yet)
-        self.engine = EngineController()
+        # Initialize engine with path from settings (but don't start it yet)
+        from ...core.settings import get_settings
+        settings = get_settings()
+        self.engine = EngineController(stockfish_path=settings.get_engine_path())
         self.engine_started = False
         
         self.init_ui()

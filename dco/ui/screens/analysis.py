@@ -36,8 +36,14 @@ class AnalysisWorker(QThread):
         try:
             self.progress.emit("Initializing engine...")
             
-            # Create engine
-            config = EngineConfig(depth=20, time_per_move=0.5)
+            # Create engine with settings
+            from ...core.settings import get_settings
+            settings = get_settings()
+            config = EngineConfig(
+                path=settings.get_engine_path(),
+                depth=20,
+                time_per_move=0.5
+            )
             engine = ChessEngine(config)
             engine.start()
             
