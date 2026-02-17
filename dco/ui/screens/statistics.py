@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from string import Template
+from urllib.parse import quote
 from typing import Dict, Optional, Tuple
 
 from PySide6.QtCore import QDate
@@ -419,6 +420,11 @@ class StatisticsScreen(QWidget):
             "</svg>"
         )
 
+    def _svg_to_data_uri(self, svg_markup: str) -> str:
+        """Convert SVG markup to a data URI for reliable HTML rendering."""
+        safe_svg = svg_markup.replace("\n", "").replace("\r", "")
+        return f"data:image/svg+xml;utf8,{quote(safe_svg)}"
+
     def _build_empty_state(self) -> str:
         return (
             "<html><body style='font-family: Trebuchet MS, Verdana, sans-serif; color: #1f2937;'>"
@@ -462,13 +468,13 @@ class StatisticsScreen(QWidget):
 
         cpl_total = max(1, cpl_buckets.get("total", 0))
 
-        cpl_svg = self._build_cpl_svg(cpl_buckets)
-        phase_svg = self._build_phase_svg(phase_totals, phase_games)
-        critical_svg = self._build_critical_gauge(critical_solved, critical_faced)
-        accuracy_svg = self._build_sparkline(accuracy_series[-24:], "Accuracy", "#22c55e")
-        elo_svg = self._build_sparkline(elo_series[-24:], "Elo", "#f97316")
-        acpl_svg = self._build_sparkline(acpl_series[-24:], "ACPL", "#38bdf8")
-        color_bias_svg = self._build_color_bias_svg(color_stats)
+        cpl_img = self._svg_to_data_uri(self._build_cpl_svg(cpl_buckets))
+        phase_img = self._svg_to_data_uri(self._build_phase_svg(phase_totals, phase_games))
+        critical_img = self._svg_to_data_uri(self._build_critical_gauge(critical_solved, critical_faced))
+        accuracy_img = self._svg_to_data_uri(self._build_sparkline(accuracy_series[-24:], "Accuracy", "#22c55e"))
+        elo_img = self._svg_to_data_uri(self._build_sparkline(elo_series[-24:], "Elo", "#f97316"))
+        acpl_img = self._svg_to_data_uri(self._build_sparkline(acpl_series[-24:], "ACPL", "#38bdf8"))
+        color_bias_img = self._svg_to_data_uri(self._build_color_bias_svg(color_stats))
 
         css = """
             :root {
@@ -587,6 +593,11 @@ class StatisticsScreen(QWidget):
                 border: 1px solid var(--line);
                 box-shadow: 0 12px 30px var(--glow);
             }
+            .chart-img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
             .chart-svg {
                 width: 100%;
                 height: auto;
@@ -666,15 +677,15 @@ class StatisticsScreen(QWidget):
 
                     <h4 class="section-title">Performance Visuals</h4>
                     <div class="spark-row">
-                        <div class="chart-card">$accuracy_svg</div>
-                        <div class="chart-card">$elo_svg</div>
-                        <div class="chart-card">$acpl_svg</div>
+                        <div class="chart-card"><img class="chart-img" src="$accuracy_img" alt="Accuracy trend"/></div>
+                        <div class="chart-card"><img class="chart-img" src="$elo_img" alt="Elo trend"/></div>
+                        <div class="chart-card"><img class="chart-img" src="$acpl_img" alt="ACPL trend"/></div>
                     </div>
                     <div class="chart-row">
-                        <div class="chart-card">$phase_svg</div>
-                        <div class="chart-card">$critical_svg</div>
+                        <div class="chart-card"><img class="chart-img" src="$phase_img" alt="Phase errors"/></div>
+                        <div class="chart-card"><img class="chart-img" src="$critical_img" alt="Critical success"/></div>
                     </div>
-                    <div class="chart-card">$cpl_svg</div>
+                    <div class="chart-card"><img class="chart-img" src="$cpl_img" alt="CPL distribution"/></div>
 
                     <h4 class="section-title">Error Diagnostics by Phase</h4>
                     <div class="grid">
@@ -713,7 +724,7 @@ class StatisticsScreen(QWidget):
                     </div>
 
                     <h4 class="section-title">Color Bias</h4>
-                    <div class="chart-card">$color_bias_svg</div>
+                    <div class="chart-card"><img class="chart-img" src="$color_bias_img" alt="Color bias"/></div>
                     <div class="split">
                         <div class="card">
                             <h3>White</h3>
@@ -742,12 +753,12 @@ class StatisticsScreen(QWidget):
             "acpl_overall": fmt(acpl_overall, 1),
             "avg_accuracy": f"{fmt(avg_accuracy, 1)}%",
             "avg_elo": fmt(avg_elo, 0),
-            "accuracy_svg": accuracy_svg,
-            "elo_svg": elo_svg,
-            "acpl_svg": acpl_svg,
-            "phase_svg": phase_svg,
-            "critical_svg": critical_svg,
-            "cpl_svg": cpl_svg,
+            "accuracy_img": accuracy_img,
+            "elo_img": elo_img,
+            "acpl_img": acpl_img,
+            "phase_img": phase_img,
+            "critical_img": critical_img,
+            "cpl_img": cpl_img,
             "opening_acpl": fmt(phase_cpl("opening"), 1),
             "opening_blunders": fmt(per_game_phase("opening", "blunders"), 2),
             "opening_mistakes": fmt(per_game_phase("opening", "mistakes"), 2),
@@ -768,7 +779,7 @@ class StatisticsScreen(QWidget):
             "critical_solved": str(critical_solved),
             "critical_failed": str(critical_failed),
             "acpl_critical": fmt(acpl_critical, 1),
-            "color_bias_svg": color_bias_svg,
+            "color_bias_img": color_bias_img,
             "white_acpl": fmt(self._avg_safe(color_stats["white"]["acpl_sum"], int(color_stats["white"]["acpl_count"])), 1),
             "white_blunders": str(int(color_stats["white"]["blunders"])),
             "white_mistakes": str(int(color_stats["white"]["mistakes"])),
